@@ -14,7 +14,7 @@ public class ItemRecord implements Record {
         return Integer.toString(i_id);
     }
 
-    public ItemRecord(int id, boolean isOriginal) {
+    public ItemRecord(int id) {
         this.i_id = id;
         this.i_im_id = RandomGenerator.makeNumber(1, 10000);
         this.i_name = RandomGenerator.makeAlphaString(14, 24);

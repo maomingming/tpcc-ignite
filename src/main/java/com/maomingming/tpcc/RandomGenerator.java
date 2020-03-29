@@ -6,7 +6,15 @@ public class RandomGenerator {
 
     static Random rand = new Random();
 
-    static int c_last = makeNumber(0, 255);
+    static int c_last_load = makeNumber(0, 255);
+    static int c_last_run;
+    static {
+        int delta;
+        do {
+            c_last_run = makeNumber(0, 255);
+            delta = Math.abs(c_last_load - c_last_run);
+        } while (delta < 65 || delta > 119 || delta == 96 || delta == 112);
+    }
     static int c_id = makeNumber(0, 1023);
     static int ol_i_id = makeNumber(0, 8191);
 
@@ -20,18 +28,19 @@ public class RandomGenerator {
         return SYLLABLE[n / 100] + SYLLABLE[(n % 100) / 10] + SYLLABLE[n % 10];
     }
 
-    public static String makeRandomLastName(int c_id) {
+    public static String makeLastNameForLoad(int c_id) {
         if (c_id < 1000)
             return makeLastName(c_id);
-        return makeLastName(makeNURand(255, 0, 999));
+        return makeLastName(makeNURand(255, 0, 999, c_last_load));
     }
 
-    public static int makeNURand(int A, int x,int y) {
+    public static String makeLastNameForRun(int c_id) {
+        return makeLastName(makeNURand(255, 0, 999, c_last_run));
+    }
+
+    public static int makeNURand(int A, int x, int y) {
         int C;
         switch (A) {
-            case 255:
-                C = c_last;
-                break;
             case 1023:
                 C = c_id;
                 break;
@@ -41,6 +50,10 @@ public class RandomGenerator {
             default:
                 throw new RuntimeException("wrong A for NURand");
         }
+        return makeNURand(A, x, y, C);
+    }
+
+    public static int makeNURand(int A, int x, int y, int C) {
         return (((makeNumber(0, A) | makeNumber(x, y)) + C) % (y - x + 1)) + x;
     }
 
