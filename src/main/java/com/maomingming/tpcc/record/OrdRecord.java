@@ -5,14 +5,14 @@ import com.maomingming.tpcc.RandomGenerator;
 import java.util.Date;
 
 public class OrdRecord implements Record{
-    int o_id;
-    int o_c_id;
-    int o_d_id;
-    int o_w_id;
-    Date o_entry_d;
-    int o_carrier;
-    int o_ol_cnt;
-    int o_all_local;
+    public int o_id;
+    public int o_c_id;
+    public int o_d_id;
+    public int o_w_id;
+    public Date o_entry_d;
+    public int o_carrier;
+    public int o_ol_cnt;
+    public int o_all_local;
 
     public OrdRecord(int id, int c_id, int d_id, int w_id) {
         this.o_id = id;

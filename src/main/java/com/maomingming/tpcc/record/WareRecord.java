@@ -3,15 +3,15 @@ package com.maomingming.tpcc.record;
 import com.maomingming.tpcc.RandomGenerator;
 
 public class WareRecord implements Record {
-    int w_id;
-    String w_name;
-    String w_street_1;
-    String w_street_2;
-    String w_city;
-    String w_state;
-    String w_zip;
-    float w_tax;
-    float w_ytd;
+    public int w_id;
+    public String w_name;
+    public String w_street_1;
+    public String w_street_2;
+    public String w_city;
+    public String w_state;
+    public String w_zip;
+    public float w_tax;
+    public float w_ytd;
 
     public WareRecord(int id) {
         this.w_id = id;

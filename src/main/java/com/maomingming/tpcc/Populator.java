@@ -34,7 +34,7 @@ public class Populator {
                 }
                 ArrayList<Integer> perm = RandomGenerator.makePermutation(3000);
                 for (int o_id = 1; o_id <= 3000; o_id++) {
-                    OrdRecord ordRecord = new OrdRecord(o_id, perm.get(o_id), d_id, w_id);
+                    OrdRecord ordRecord = new OrdRecord(o_id, perm.get(o_id-1), d_id, w_id);
                     loader.load("ORDER", ordRecord);
                     OrdLineRecord[] ordLineRecords = ordRecord.makeOrdLineForLoad();
                     for (OrdLineRecord ordLineRecord : ordLineRecords) {

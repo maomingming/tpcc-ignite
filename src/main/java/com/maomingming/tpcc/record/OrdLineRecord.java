@@ -5,16 +5,16 @@ import com.maomingming.tpcc.RandomGenerator;
 import java.util.Date;
 
 public class OrdLineRecord implements Record {
-    int ol_o_id;
-    int ol_d_id;
-    int ol_w_id;
-    int ol_number;
-    int ol_i_id;
-    int ol_supply_w_id;
-    Date ol_delivery_d;
-    int ol_quantity;
-    float ol_amount;
-    String ol_dist_info;
+    public int ol_o_id;
+    public int ol_d_id;
+    public int ol_w_id;
+    public int ol_number;
+    public int ol_i_id;
+    public int ol_supply_w_id;
+    public Date ol_delivery_d;
+    public int ol_quantity;
+    public float ol_amount;
+    public String ol_dist_info;
 
     public OrdLineRecord(int o_id, int d_id, int w_id, int number, Date entryD) {
         this.ol_o_id = o_id;

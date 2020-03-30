@@ -5,27 +5,27 @@ import com.maomingming.tpcc.RandomGenerator;
 import java.util.Date;
 
 public class CustRecord implements Record{
-    int c_id;
-    int c_d_id;
-    int c_w_id;
-    String c_last;
-    String c_middle;
-    String c_first;
-    String c_street_1;
-    String c_street_2;
-    String c_city;
-    String c_state;
-    String c_zip;
-    String c_phone;
-    Date c_since;
-    String c_credit;
-    float c_credit_lim;
-    float c_discount;
-    float c_balance;
-    float c_ytd_payment;
-    int c_payment_cnt;
-    int c_delivery_cnt;
-    String c_data;
+    public int c_id;
+    public int c_d_id;
+    public int c_w_id;
+    public String c_last;
+    public String c_middle;
+    public String c_first;
+    public String c_street_1;
+    public String c_street_2;
+    public String c_city;
+    public String c_state;
+    public String c_zip;
+    public String c_phone;
+    public Date c_since;
+    public String c_credit;
+    public float c_credit_lim;
+    public float c_discount;
+    public float c_balance;
+    public float c_ytd_payment;
+    public int c_payment_cnt;
+    public int c_delivery_cnt;
+    public String c_data;
 
     public CustRecord(int id, int d_id, int d_w_id) {
         this.c_id = id;

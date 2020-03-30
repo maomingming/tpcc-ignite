@@ -3,17 +3,17 @@ package com.maomingming.tpcc.record;
 import com.maomingming.tpcc.RandomGenerator;
 
 public class DistRecord implements Record{
-    int d_id;
-    int d_w_id;
-    String d_name;
-    String d_street_1;
-    String d_street_2;
-    String d_city;
-    String d_state;
-    String d_zip;
-    float d_tax;
-    float d_ytd;
-    int d_next_o_id;
+    public int d_id;
+    public int d_w_id;
+    public String d_name;
+    public String d_street_1;
+    public String d_street_2;
+    public String d_city;
+    public String d_state;
+    public String d_zip;
+    public float d_tax;
+    public float d_ytd;
+    public int d_next_o_id;
 
     public DistRecord(int id, int w_id) {
         this.d_id = id;

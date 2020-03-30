@@ -3,15 +3,15 @@ package com.maomingming.tpcc.record;
 import com.maomingming.tpcc.RandomGenerator;
 
 public class StockRecord implements Record{
-    int s_i_id;
-    int s_w_id;
-    int s_quantity;
-    String s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05;
-    String s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10;
-    int s_ytd;
-    int s_order_cnt;
-    int s_remote_cnt;
-    String s_data;
+    public int s_i_id;
+    public int s_w_id;
+    public int s_quantity;
+    public String s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05;
+    public String s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10;
+    public int s_ytd;
+    public int s_order_cnt;
+    public int s_remote_cnt;
+    public String s_data;
 
     public StockRecord(int i_id, int w_id) {
         this.s_i_id = i_id;

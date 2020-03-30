@@ -4,11 +4,11 @@ import com.maomingming.tpcc.RandomGenerator;
 
 public class ItemRecord implements Record {
 
-    int i_id;
-    int i_im_id;
-    String i_name;
-    float i_price;
-    String i_data;
+    public int i_id;
+    public int i_im_id;
+    public String i_name;
+    public float i_price;
+    public String i_data;
 
     public String getKey() {
         return Integer.toString(i_id);

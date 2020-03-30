@@ -8,14 +8,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HistRecord implements Record{
     private static AtomicInteger h_cnt = new AtomicInteger(0);
     int h_id;
-    int h_c_id;
-    int h_c_d_id;
-    int h_d_id;
-    int h_c_w_id;
-    int h_w_id;
-    Date h_date;
-    float h_amount;
-    String h_data;
+    public int h_c_id;
+    public int h_c_d_id;
+    public int h_d_id;
+    public int h_c_w_id;
+    public int h_w_id;
+    public Date h_date;
+    public float h_amount;
+    public String h_data;
 
     public HistRecord(int c_id, int d_id, int w_id) {
         this.h_id = h_cnt.incrementAndGet();

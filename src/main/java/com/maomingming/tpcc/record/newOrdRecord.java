@@ -1,9 +1,9 @@
 package com.maomingming.tpcc.record;
 
 public class newOrdRecord implements Record{
-    int no_o_id;
-    int no_d_id;
-    int no_w_id;
+    public int no_o_id;
+    public int no_d_id;
+    public int no_w_id;
 
     public newOrdRecord(int o_id, int d_id, int w_id) {
         this.no_o_id = o_id;
