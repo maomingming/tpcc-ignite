@@ -4,7 +4,7 @@ import com.maomingming.tpcc.RandomGenerator;
 
 import java.util.Date;
 
-public class OrdRecord {
+public class OrdRecord implements Record{
     int o_id;
     int o_c_id;
     int o_d_id;
@@ -26,5 +26,21 @@ public class OrdRecord {
             this.o_carrier = RandomGenerator.makeNumber(1, 10);
         this.o_ol_cnt = RandomGenerator.makeNumber(5, 15);
         this.o_all_local = 1;
+    }
+
+    public OrdLineRecord[] makeOrdLineForLoad() {
+        OrdLineRecord[] ordLine = new OrdLineRecord[this.o_ol_cnt];
+        for (int i = 0; i < this.o_ol_cnt; i++) {
+            ordLine[i] = new OrdLineRecord(this.o_id, this.o_d_id, this.o_w_id, i + 1, this.o_entry_d);
+        }
+        return ordLine;
+    }
+
+    public static String getKey(int o_w_id, int o_d_id, int o_id) {
+        return "O_W_ID=" + o_w_id + "&O_D_ID=" + o_d_id + "&O_ID" + o_id;
+    }
+
+    public String getKey() {
+        return getKey(this.o_w_id, this.o_d_id, this.o_id);
     }
 }

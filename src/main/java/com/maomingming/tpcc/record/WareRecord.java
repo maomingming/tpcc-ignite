@@ -2,7 +2,7 @@ package com.maomingming.tpcc.record;
 
 import com.maomingming.tpcc.RandomGenerator;
 
-public class WareRecord {
+public class WareRecord implements Record {
     int w_id;
     String w_name;
     String w_street_1;
@@ -23,5 +23,13 @@ public class WareRecord {
         this.w_zip = RandomGenerator.makeZip();
         this.w_tax = RandomGenerator.makeFloat(0.0000f, 0.2000f, 0.0001f);
         this.w_ytd = 300000.00f;
+    }
+
+    public static String getKey(int w_id) {
+        return "W_ID=" + w_id;
+    }
+
+    public String getKey() {
+        return getKey(this.w_id);
     }
 }

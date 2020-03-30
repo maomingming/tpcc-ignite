@@ -2,7 +2,7 @@ package com.maomingming.tpcc.record;
 
 import com.maomingming.tpcc.RandomGenerator;
 
-public class DistRecord {
+public class DistRecord implements Record{
     int d_id;
     int d_w_id;
     String d_name;
@@ -27,6 +27,14 @@ public class DistRecord {
         this.d_tax = RandomGenerator.makeFloat(0.0000f, 0.2000f, 0.0001f);
         this.d_ytd = 30000.00f;
         this.d_next_o_id = 3001;
+    }
+
+    public static String getKey(int d_w_id, int d_id) {
+        return "D_W_ID=" + d_w_id + "&D_ID=" + d_id;
+    }
+
+    public String getKey() {
+        return getKey(this.d_w_id, this.d_id);
     }
 }
 

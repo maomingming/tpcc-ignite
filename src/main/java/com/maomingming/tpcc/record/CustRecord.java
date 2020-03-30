@@ -4,7 +4,7 @@ import com.maomingming.tpcc.RandomGenerator;
 
 import java.util.Date;
 
-public class CustRecord {
+public class CustRecord implements Record{
     int c_id;
     int c_d_id;
     int c_w_id;
@@ -31,7 +31,7 @@ public class CustRecord {
         this.c_id = id;
         this.c_d_id = d_id;
         this.c_w_id = d_w_id;
-        this.c_last = RandomGenerator.makeLastName(id);
+        this.c_last = RandomGenerator.makeLastNameForLoad(id);
         this.c_middle = "OE";
         this.c_first = RandomGenerator.makeAlphaString(8, 16);
         this.c_street_1 = RandomGenerator.makeAlphaString(10, 20);
@@ -52,5 +52,13 @@ public class CustRecord {
         this.c_payment_cnt = 1;
         this.c_delivery_cnt = 0;
         this.c_data = RandomGenerator.makeAlphaString(300, 500);
+    }
+
+    public static String getKey(int c_w_id, int c_d_id, int c_id) {
+        return "C_W_ID=" + c_w_id + "&C_D_ID=" + c_d_id + "&C_ID" + c_id;
+    }
+
+    public String getKey() {
+        return getKey(this.c_w_id, this.c_d_id, this.c_id);
     }
 }

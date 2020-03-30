@@ -1,5 +1,7 @@
 package com.maomingming.tpcc;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 public class RandomGenerator {
@@ -97,5 +99,13 @@ public class RandomGenerator {
 
     public static String makeZip() {
         return makeNumString(4, 4) + "11111";
+    }
+
+    public static ArrayList<Integer> makePermutation(int n) {
+        ArrayList<Integer> perm = new ArrayList<>(n);
+        for (int i = 1; i <= n; i++)
+            perm.add(i);
+        Collections.shuffle(perm);
+        return perm;
     }
 }
