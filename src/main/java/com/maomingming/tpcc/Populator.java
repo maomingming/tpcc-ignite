@@ -41,7 +41,7 @@ public class Populator {
                         loader.load("ORDER-LINE", ordLineRecord);
                     }
                     if (o_id > 2100)
-                        loader.load("NEW-ORDER", new newOrdRecord(o_id, d_id, w_id));
+                        loader.load("NEW-ORDER", new NewOrdRecord(o_id, d_id, w_id));
                 }
             }
         }

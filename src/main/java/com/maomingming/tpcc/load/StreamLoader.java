@@ -18,7 +18,7 @@ public class StreamLoader implements Loader{
 
     public StreamLoader() {
         Ignition.setClientMode(true);
-        this.ignite = Ignition.start();
+        this.ignite = Ignition.start("config/transaction.xml");
         for (String table : TABLES) {
             caches.put(table, this.ignite.getOrCreateCache(table));
             stmrs.put(table, this.ignite.dataStreamer(table));
