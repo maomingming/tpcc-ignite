@@ -33,21 +33,16 @@ public class OrdLineRecord implements Record {
         this.ol_dist_info = RandomGenerator.makeAlphaString(24, 24);
     }
 
-    public OrdLineRecord(int d_id, int w_id, boolean rbk, int w_cnt) {
+    public OrdLineRecord(int o_id, int d_id, int w_id, int number, int i_id, int supply_w_id, int quantity, float amount, String dist_info) {
+        this.ol_o_id = o_id;
         this.ol_d_id = d_id;
         this.ol_w_id = w_id;
-        this.ol_i_id = RandomGenerator.makeNURand(8191, 1, 100000);
-        if (rbk)
-            this.ol_i_id = 0;
-        if (RandomGenerator.makeNumber(1, 100) > 1) {
-            this.ol_supply_w_id = w_id;
-        }
-        else {
-            do {
-                this.ol_supply_w_id = RandomGenerator.makeNumber(1, w_cnt);
-            } while (this.ol_supply_w_id != w_id);
-        }
-        this.ol_quantity = RandomGenerator.makeNumber(1, 10);
+        this.ol_number = number;
+        this.ol_i_id = i_id;
+        this.ol_supply_w_id = supply_w_id;
+        this.ol_quantity = quantity;
+        this.ol_amount = amount;
+        this.ol_dist_info = dist_info;
     }
 
     public static String getKey(int ol_w_id, int ol_d_id, int ol_o_id, int ol_number) {

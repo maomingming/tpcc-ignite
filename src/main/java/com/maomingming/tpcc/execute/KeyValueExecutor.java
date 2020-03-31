@@ -8,6 +8,8 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.transactions.Transaction;
 
+import java.util.Date;
+
 public class KeyValueExecutor implements Executor{
     int w_id;
     Ignite ignite;
@@ -40,61 +42,71 @@ public class KeyValueExecutor implements Executor{
 
     public void doNewOrder(NewOrder newOrder) {
         try (Transaction tx = this.ignite.transactions().txStart()) {
-            newOrder.wareRecord = this.wareCache.get(WareRecord.getKey(w_id));
+            WareRecord wareRecord = this.wareCache.get(WareRecord.getKey(w_id));
+            newOrder.w_tax = wareRecord.w_tax;
 
-            newOrder.distRecord = this.distCache.get(DistRecord.getKey(w_id, newOrder.d_id));
-            int o_id = newOrder.distRecord.d_next_o_id;
-            newOrder.distRecord.d_next_o_id ++;
-            this.distCache.put(newOrder.distRecord.getKey(), newOrder.distRecord);
+            DistRecord distRecord = this.distCache.get(DistRecord.getKey(w_id, newOrder.d_id));
+            newOrder.d_tax = distRecord.d_tax;
+            newOrder.o_id = distRecord.d_next_o_id;
+            distRecord.d_next_o_id ++;
+            this.distCache.put(distRecord.getKey(), distRecord);
 
-            newOrder.custRecord = this.custCache.get(CustRecord.getKey(w_id, newOrder.d_id, newOrder.c_id));
+            CustRecord custRecord = this.custCache.get(CustRecord.getKey(w_id, newOrder.d_id, newOrder.c_id));
+            newOrder.c_discount = custRecord.c_discount;
+            newOrder.c_last = custRecord.c_last;
+            newOrder.c_credit = custRecord.c_credit;
+
+            newOrder.o_ol_cnt = newOrder.inputRepeatingGroups.length;
 
             boolean all_local = true;
-            for (OrdLineRecord ordLine : newOrder.ordLineRecords) {
-                if (ordLine.ol_w_id != ordLine.ol_supply_w_id) {
+            for (int i = 0; i < newOrder.o_ol_cnt; i++) {
+                if (newOrder.inputRepeatingGroups[i].ol_supply_w_id != w_id) {
                     all_local = false;
                     break;
                 }
             }
-            int ol_cnt = newOrder.ordLineRecords.length;
-            newOrder.ordRecord = new OrdRecord(o_id, newOrder.c_id, newOrder.d_id, w_id, ol_cnt, all_local);
-            this.ordCache.put(newOrder.ordRecord.getKey(), newOrder.ordRecord);
-            NewOrdRecord newOrdRecord =  new NewOrdRecord(o_id, newOrder.d_id, w_id);
+
+            OrdRecord ordRecord = new OrdRecord(newOrder.o_id, newOrder.c_id, newOrder.d_id, w_id, newOrder.o_ol_cnt, all_local);
+            this.ordCache.put(ordRecord.getKey(), ordRecord);
+            NewOrdRecord newOrdRecord =  new NewOrdRecord(newOrder.o_id, newOrder.d_id, w_id);
             this.newOrdCache.put(newOrdRecord.getKey(), newOrdRecord);
 
-            for (int i = 0; i < ol_cnt; i++) {
-                OrdLineRecord ordLineRecord = newOrder.ordLineRecords[i];
-                ItemRecord itemRecord = this.itemCache.get(ItemRecord.getKey(ordLineRecord.ol_i_id));
-                StockRecord stockRecord = this.stockCache.get(StockRecord.getKey(ordLineRecord.ol_supply_w_id, ordLineRecord.ol_i_id));
+            for (int i = 0; i < newOrder.o_ol_cnt; i++) {
+                NewOrder.InputRepeatingGroup input = newOrder.inputRepeatingGroups[i];
+                NewOrder.OutputRepeatingGroup output = newOrder.outputRepeatingGroups[i];
 
-                if (stockRecord.s_quantity >= ordLineRecord.ol_quantity + 10)
-                    stockRecord.s_quantity -= ordLineRecord.ol_quantity;
+                ItemRecord itemRecord = this.itemCache.get(ItemRecord.getKey(input.ol_i_id));
+                output.i_price = itemRecord.i_price;
+                output.i_name = itemRecord.i_name;
+
+                StockRecord stockRecord = this.stockCache.get(StockRecord.getKey(input.ol_supply_w_id, input.ol_i_id));
+                if (stockRecord.s_quantity >= input.ol_quantity + 10)
+                    stockRecord.s_quantity -= input.ol_quantity;
                 else
-                    stockRecord.s_quantity += 91 - ordLineRecord.ol_quantity;
-                stockRecord.s_ytd += ordLineRecord.ol_quantity;
+                    stockRecord.s_quantity += 91 - input.ol_quantity;
+                stockRecord.s_ytd += input.ol_quantity;
                 stockRecord.s_order_cnt ++;
-                if (ordLineRecord.ol_w_id != ordLineRecord.ol_supply_w_id)
+                if (input.ol_supply_w_id != w_id)
                     stockRecord.s_remote_cnt ++;
                 stockCache.put(stockRecord.getKey(), stockRecord);
+                output.s_quantity = stockRecord.s_quantity;
+
+                output.ol_amount = input.ol_quantity * itemRecord.i_price;
 
                 if (itemRecord.i_data.contains("ORIGINAL") && stockRecord.s_data.contains("ORIGINAL"))
-                    newOrder.brandGenerics[i] = 'B';
+                    output.brand_generic = 'B';
                 else
-                    newOrder.brandGenerics[i] = 'G';
+                    output.brand_generic = 'G';
 
-                ordLineRecord.ol_o_id = o_id;
-                ordLineRecord.ol_number = i + 1;
-                ordLineRecord.ol_amount = ordLineRecord.ol_quantity * itemRecord.i_price;
-                ordLineRecord.ol_dist_info = stockRecord.getDist(newOrder.d_id);
+                OrdLineRecord ordLineRecord = new OrdLineRecord(newOrder.o_id, newOrder.d_id, w_id,
+                        i + 1, input.ol_i_id, input.ol_supply_w_id, input.ol_quantity,
+                        output.ol_amount, stockRecord.getDistInfo(newOrder.d_id));
                 ordLineCache.put(ordLineRecord.getKey(), ordLineRecord);
 
-                newOrder.totalAmount += ordLineRecord.ol_amount;
-
-                newOrder.itemRecords[i] = itemRecord;
-                newOrder.stockRecords[i] = stockRecord;
+                newOrder.totalAmount += output.ol_amount;
             }
-            newOrder.totalAmount *= (1 - newOrder.custRecord.c_discount) * (1 + newOrder.wareRecord.w_tax + newOrder.distRecord.d_tax);
-
+            newOrder.totalAmount *= (1 - custRecord.c_discount) * (1 + wareRecord.w_tax + distRecord.d_tax);
+            newOrder.o_entry_d = new Date();
             tx.commit();
         }
     }

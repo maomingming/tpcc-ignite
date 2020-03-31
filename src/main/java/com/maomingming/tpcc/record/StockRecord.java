@@ -43,7 +43,7 @@ public class StockRecord implements Record{
         return getKey(this.s_w_id, this.s_i_id);
     }
 
-    public String getDist(int d_id) {
+    public String getDistInfo(int d_id) {
         switch (d_id) {
             case 1:
                 return s_dist_01;
