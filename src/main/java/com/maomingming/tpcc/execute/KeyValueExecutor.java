@@ -40,7 +40,7 @@ public class KeyValueExecutor implements Executor{
         this.wareCache = this.ignite.getOrCreateCache("WAREHOUSE");
     }
 
-    public void doNewOrder(NewOrder newOrder) {
+    public int doNewOrder(NewOrder newOrder) {
         try (Transaction tx = this.ignite.transactions().txStart()) {
             WareRecord wareRecord = this.wareCache.get(WareRecord.getKey(w_id));
             newOrder.w_tax = wareRecord.w_tax;
@@ -76,6 +76,10 @@ public class KeyValueExecutor implements Executor{
                 NewOrder.OutputRepeatingGroup output = newOrder.outputRepeatingGroups[i];
 
                 ItemRecord itemRecord = this.itemCache.get(ItemRecord.getKey(input.ol_i_id));
+                if (itemRecord == null) {
+                    tx.rollback();
+                    return -1;
+                }
                 output.i_price = itemRecord.i_price;
                 output.i_name = itemRecord.i_name;
 
@@ -109,6 +113,7 @@ public class KeyValueExecutor implements Executor{
             newOrder.o_entry_d = new Date();
             tx.commit();
         }
+        return 0;
     }
 
     public void executeFinish() {

@@ -1,6 +1,5 @@
 package com.maomingming.tpcc;
 
-import com.maomingming.tpcc.record.OrdLineRecord;
 import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.txn.NewOrder;
@@ -43,8 +42,11 @@ public class Emulator extends Thread{
 
     public void doNewOrder() {
         NewOrder newOrder = new NewOrder(w_id, w_cnt);
-        this.executor.doNewOrder(newOrder);
-        newOrder.printResult(System.out);
+        int ret = this.executor.doNewOrder(newOrder);
+        if (ret != 0)
+            newOrder.printAfterRollback(System.out);
+        else
+            newOrder.printResult(System.out);
     }
 
 }

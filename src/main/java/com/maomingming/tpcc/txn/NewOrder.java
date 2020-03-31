@@ -79,4 +79,11 @@ public class NewOrder {
         }
     }
 
+    public void printAfterRollback(PrintStream printStream) {
+        printStream.println("NEW ORDER");
+        printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
+        printStream.printf("Customer: %d\tName: %s\tCredit: %s\n", c_id, c_last, c_credit);
+        printStream.printf("Order Number: %d\n", o_id);
+        printStream.println("Item number is not valid");
+    }
 }
