@@ -28,7 +28,7 @@ public class Coordinator {
         }
         for (int i = 1; i <= w_cnt; i ++) {
             for (int j = 0; j < t_cnt_per_w; j++) {
-                new Emulator(executorType, i).start();
+                new Emulator(executorType, i, w_cnt).start();
             }
         }
         try (Ignite ignite=Ignition.start("config/transaction.xml")) {

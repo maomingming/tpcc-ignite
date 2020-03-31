@@ -33,10 +33,9 @@ public class OrdLineRecord implements Record {
         this.ol_dist_info = RandomGenerator.makeAlphaString(24, 24);
     }
 
-    public OrdLineRecord(int d_id, int w_id, int number, boolean rbk, int w_cnt) {
+    public OrdLineRecord(int d_id, int w_id, boolean rbk, int w_cnt) {
         this.ol_d_id = d_id;
         this.ol_w_id = w_id;
-        this.ol_number = number;
         this.ol_i_id = RandomGenerator.makeNURand(8191, 1, 100000);
         if (rbk)
             this.ol_i_id = 0;
