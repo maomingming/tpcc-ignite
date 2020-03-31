@@ -50,7 +50,7 @@ public class RandomGenerator {
                 C = ol_i_id;
                 break;
             default:
-                throw new RuntimeException("wrong A for NURand");
+                throw new IllegalStateException("Unexpected value: " + A);
         }
         return makeNURand(A, x, y, C);
     }

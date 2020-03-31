@@ -33,6 +33,24 @@ public class OrdLineRecord implements Record {
         this.ol_dist_info = RandomGenerator.makeAlphaString(24, 24);
     }
 
+    public OrdLineRecord(int d_id, int w_id, int number, boolean rbk, int w_cnt) {
+        this.ol_d_id = d_id;
+        this.ol_w_id = w_id;
+        this.ol_number = number;
+        this.ol_i_id = RandomGenerator.makeNURand(8191, 1, 100000);
+        if (rbk)
+            this.ol_i_id = 0;
+        if (RandomGenerator.makeNumber(1, 100) > 1) {
+            this.ol_supply_w_id = w_id;
+        }
+        else {
+            do {
+                this.ol_supply_w_id = RandomGenerator.makeNumber(1, w_cnt);
+            } while (this.ol_supply_w_id != w_id);
+        }
+        this.ol_quantity = RandomGenerator.makeNumber(1, 10);
+    }
+
     public static String getKey(int ol_w_id, int ol_d_id, int ol_o_id, int ol_number) {
         return "OL_W_ID=" + ol_w_id + "&OL_D_ID=" + ol_d_id + "&OL_O_ID" + ol_o_id + "&OL_NUMBER" + ol_number;
     }

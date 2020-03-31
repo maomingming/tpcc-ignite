@@ -10,8 +10,11 @@ public class ItemRecord implements Record {
     public float i_price;
     public String i_data;
 
+    public static String getKey(int i_id) {
+        return "I_ID=" + i_id;
+    }
     public String getKey() {
-        return Integer.toString(i_id);
+        return getKey(i_id);
     }
 
     public ItemRecord(int id) {

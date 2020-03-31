@@ -42,4 +42,31 @@ public class StockRecord implements Record{
     public String getKey() {
         return getKey(this.s_w_id, this.s_i_id);
     }
+
+    public String getDist(int d_id) {
+        switch (d_id) {
+            case 1:
+                return s_dist_01;
+            case 2:
+                return s_dist_02;
+            case 3:
+                return s_dist_03;
+            case 4:
+                return s_dist_04;
+            case 5:
+                return s_dist_05;
+            case 6:
+                return s_dist_06;
+            case 7:
+                return s_dist_07;
+            case 8:
+                return s_dist_08;
+            case 9:
+                return s_dist_09;
+            case 10:
+                return s_dist_10;
+            default:
+                throw new IllegalStateException("Unexpected value: " + d_id);
+        }
+    }
 }

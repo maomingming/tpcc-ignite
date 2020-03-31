@@ -53,7 +53,7 @@ public class Populator {
             case "STREAM_LOADER":
                 return new StreamLoader();
             default:
-                throw new RuntimeException("Wrong Loader Type.");
+                throw new IllegalStateException("Unexpected value: " + loaderType);
         }
     }
 
