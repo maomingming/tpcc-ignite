@@ -2,18 +2,25 @@ package com.maomingming.tpcc;
 
 import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
-import com.maomingming.tpcc.txn.NewOrder;
+import com.maomingming.tpcc.txn.NewOrderTxn;
+
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 
 public class Emulator extends Thread{
     int w_id;
+    int t_id;
     int w_cnt;
+    PrintStream printStream;
     Executor executor;
 
     public void run() {
         for (int i = 0; i < 1000; i ++) {
             doNext();
+            CheckPoint.cnt.incrementAndGet();
+            int waitTime = (int)(-Math.log(RandomGenerator.makeFloat(0.001f, 0.999f, 0.001f)) * 1000);
             try {
-                sleep(10000);
+                sleep(waitTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -21,9 +28,15 @@ public class Emulator extends Thread{
         this.executor.executeFinish();
     }
 
-    public Emulator(String executorType, int w_id, int w_cnt) {
+    public Emulator(String executorType, int w_id, int t_id, int w_cnt) {
         this.w_id = w_id;
+        this.t_id = t_id;
         this.w_cnt = w_cnt;
+        try {
+            this.printStream = new PrintStream("result/" + t_id +".log");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         this.executor = getExecutor(executorType, w_id);
     }
 
@@ -41,12 +54,15 @@ public class Emulator extends Thread{
     }
 
     public void doNewOrder() {
-        NewOrder newOrder = new NewOrder(w_id, w_cnt);
-        int ret = this.executor.doNewOrder(newOrder);
+        NewOrderTxn newOrderTxn = new NewOrderTxn(w_id, w_cnt);
+        long begin = System.currentTimeMillis();
+        int ret = this.executor.doNewOrder(newOrderTxn);
+        long end = System.currentTimeMillis();
+        CheckPoint.addResponseTime(end - begin);
         if (ret != 0)
-            newOrder.printAfterRollback(System.out);
+            newOrderTxn.printAfterRollback(this.printStream);
         else
-            newOrder.printResult(System.out);
+            newOrderTxn.printResult(this.printStream);
     }
 
 }

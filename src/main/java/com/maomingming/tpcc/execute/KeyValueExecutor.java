@@ -1,7 +1,7 @@
 package com.maomingming.tpcc.execute;
 
 import com.maomingming.tpcc.record.*;
-import com.maomingming.tpcc.txn.NewOrder;
+import com.maomingming.tpcc.txn.NewOrderTxn;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
@@ -40,40 +40,40 @@ public class KeyValueExecutor implements Executor{
         this.wareCache = this.ignite.getOrCreateCache("WAREHOUSE");
     }
 
-    public int doNewOrder(NewOrder newOrder) {
+    public int doNewOrder(NewOrderTxn newOrderTxn) {
         try (Transaction tx = this.ignite.transactions().txStart()) {
             WareRecord wareRecord = this.wareCache.get(WareRecord.getKey(w_id));
-            newOrder.w_tax = wareRecord.w_tax;
+            newOrderTxn.w_tax = wareRecord.w_tax;
 
-            DistRecord distRecord = this.distCache.get(DistRecord.getKey(w_id, newOrder.d_id));
-            newOrder.d_tax = distRecord.d_tax;
-            newOrder.o_id = distRecord.d_next_o_id;
+            DistRecord distRecord = this.distCache.get(DistRecord.getKey(w_id, newOrderTxn.d_id));
+            newOrderTxn.d_tax = distRecord.d_tax;
+            newOrderTxn.o_id = distRecord.d_next_o_id;
             distRecord.d_next_o_id ++;
             this.distCache.put(distRecord.getKey(), distRecord);
 
-            CustRecord custRecord = this.custCache.get(CustRecord.getKey(w_id, newOrder.d_id, newOrder.c_id));
-            newOrder.c_discount = custRecord.c_discount;
-            newOrder.c_last = custRecord.c_last;
-            newOrder.c_credit = custRecord.c_credit;
+            CustRecord custRecord = this.custCache.get(CustRecord.getKey(w_id, newOrderTxn.d_id, newOrderTxn.c_id));
+            newOrderTxn.c_discount = custRecord.c_discount;
+            newOrderTxn.c_last = custRecord.c_last;
+            newOrderTxn.c_credit = custRecord.c_credit;
 
-            newOrder.o_ol_cnt = newOrder.inputRepeatingGroups.length;
+            newOrderTxn.o_ol_cnt = newOrderTxn.inputRepeatingGroups.length;
 
             boolean all_local = true;
-            for (int i = 0; i < newOrder.o_ol_cnt; i++) {
-                if (newOrder.inputRepeatingGroups[i].ol_supply_w_id != w_id) {
+            for (int i = 0; i < newOrderTxn.o_ol_cnt; i++) {
+                if (newOrderTxn.inputRepeatingGroups[i].ol_supply_w_id != w_id) {
                     all_local = false;
                     break;
                 }
             }
 
-            OrdRecord ordRecord = new OrdRecord(newOrder.o_id, newOrder.c_id, newOrder.d_id, w_id, newOrder.o_ol_cnt, all_local);
+            OrdRecord ordRecord = new OrdRecord(newOrderTxn.o_id, newOrderTxn.c_id, newOrderTxn.d_id, w_id, newOrderTxn.o_ol_cnt, all_local);
             this.ordCache.put(ordRecord.getKey(), ordRecord);
-            NewOrdRecord newOrdRecord =  new NewOrdRecord(newOrder.o_id, newOrder.d_id, w_id);
+            NewOrdRecord newOrdRecord =  new NewOrdRecord(newOrderTxn.o_id, newOrderTxn.d_id, w_id);
             this.newOrdCache.put(newOrdRecord.getKey(), newOrdRecord);
 
-            for (int i = 0; i < newOrder.o_ol_cnt; i++) {
-                NewOrder.InputRepeatingGroup input = newOrder.inputRepeatingGroups[i];
-                NewOrder.OutputRepeatingGroup output = newOrder.outputRepeatingGroups[i];
+            for (int i = 0; i < newOrderTxn.o_ol_cnt; i++) {
+                NewOrderTxn.InputRepeatingGroup input = newOrderTxn.inputRepeatingGroups[i];
+                NewOrderTxn.OutputRepeatingGroup output = newOrderTxn.outputRepeatingGroups[i];
 
                 ItemRecord itemRecord = this.itemCache.get(ItemRecord.getKey(input.ol_i_id));
                 if (itemRecord == null) {
@@ -102,15 +102,15 @@ public class KeyValueExecutor implements Executor{
                 else
                     output.brand_generic = 'G';
 
-                OrdLineRecord ordLineRecord = new OrdLineRecord(newOrder.o_id, newOrder.d_id, w_id,
+                OrdLineRecord ordLineRecord = new OrdLineRecord(newOrderTxn.o_id, newOrderTxn.d_id, w_id,
                         i + 1, input.ol_i_id, input.ol_supply_w_id, input.ol_quantity,
-                        output.ol_amount, stockRecord.getDistInfo(newOrder.d_id));
+                        output.ol_amount, stockRecord.getDistInfo(newOrderTxn.d_id));
                 ordLineCache.put(ordLineRecord.getKey(), ordLineRecord);
 
-                newOrder.totalAmount += output.ol_amount;
+                newOrderTxn.totalAmount += output.ol_amount;
             }
-            newOrder.totalAmount *= (1 - custRecord.c_discount) * (1 + wareRecord.w_tax + distRecord.d_tax);
-            newOrder.o_entry_d = new Date();
+            newOrderTxn.totalAmount *= (1 - custRecord.c_discount) * (1 + wareRecord.w_tax + distRecord.d_tax);
+            newOrderTxn.o_entry_d = new Date();
             tx.commit();
         }
         return 0;

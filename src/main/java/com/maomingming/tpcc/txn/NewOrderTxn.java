@@ -5,7 +5,7 @@ import com.maomingming.tpcc.RandomGenerator;
 import java.io.PrintStream;
 import java.util.Date;
 
-public class NewOrder {
+public class NewOrderTxn {
     public int w_id;
 
     public int d_id;
@@ -50,7 +50,7 @@ public class NewOrder {
     }
     public OutputRepeatingGroup[] outputRepeatingGroups;
 
-    public NewOrder(int w_id, int w_cnt) {
+    public NewOrderTxn(int w_id, int w_cnt) {
         this.w_id = w_id;
         this.d_id = RandomGenerator.makeNumber(1, 10);
         this.c_id = RandomGenerator.makeNURand(1023, 1, 3000);
