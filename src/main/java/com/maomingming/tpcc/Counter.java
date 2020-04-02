@@ -2,7 +2,7 @@ package com.maomingming.tpcc;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CheckPoint extends Thread {
+public class Counter extends Thread {
     final static int MAX_RT = 10;
     final static int I_NUM_PER_SEC = 10;
     static AtomicInteger cnt = new AtomicInteger(0);
@@ -16,11 +16,11 @@ public class CheckPoint extends Thread {
             long lastMill = System.currentTimeMillis();
             int last_cnt = cnt.get();
             try {
-                sleep(60000);
+                sleep(30000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.printf("tpmC: %d, ", (cnt.get()-last_cnt)/((System.currentTimeMillis()-lastMill)/60000));
+            System.out.printf("tpmC: %d, ", (int)((cnt.get()-last_cnt)/((float)(System.currentTimeMillis()-lastMill)/60000)));
             System.out.printf("90th Percentile Response Time: %.1fs\n", (float)getPercentile(0.9f)/I_NUM_PER_SEC);
         }
     }

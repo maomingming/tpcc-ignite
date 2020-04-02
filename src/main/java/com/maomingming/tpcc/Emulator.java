@@ -15,10 +15,10 @@ public class Emulator extends Thread{
     Executor executor;
 
     public void run() {
-        for (int i = 0; i < 1000; i ++) {
+        for (int i = 0; i < 1000000; i ++) {
             doNext();
-            CheckPoint.cnt.incrementAndGet();
-            int waitTime = (int)(-Math.log(RandomGenerator.makeFloat(0.001f, 0.999f, 0.001f)) * 1000);
+            Counter.cnt.incrementAndGet();
+            int waitTime = (int)(-Math.log(RandomGenerator.makeFloat(0.001f, 0.999f, 0.001f)) * 1200);
             try {
                 sleep(waitTime);
             } catch (InterruptedException e) {
@@ -58,7 +58,7 @@ public class Emulator extends Thread{
         long begin = System.currentTimeMillis();
         int ret = this.executor.doNewOrder(newOrderTxn);
         long end = System.currentTimeMillis();
-        CheckPoint.addResponseTime(end - begin);
+        Counter.addResponseTime(end - begin);
         if (ret != 0)
             newOrderTxn.printAfterRollback(this.printStream);
         else

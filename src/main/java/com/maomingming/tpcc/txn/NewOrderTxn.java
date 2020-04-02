@@ -74,7 +74,7 @@ public class NewOrderTxn {
         for (int i = 0; i < o_ol_cnt; i++) {
             InputRepeatingGroup input = inputRepeatingGroups[i];
             OutputRepeatingGroup output = outputRepeatingGroups[i];
-            printStream.printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
+            printStream.printf("%s\t%s\t%s\t%s\t%s\t%s\t%.2f\t%.2f\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
                     input.ol_quantity, output.s_quantity, output.brand_generic, output.i_price, output.ol_amount);
         }
     }
