@@ -3,6 +3,8 @@ package com.maomingming.tpcc;
 import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.txn.NewOrderTxn;
+import com.maomingming.tpcc.txn.PaymentTxn;
+import com.maomingming.tpcc.txn.StockLevelTxn;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -50,7 +52,7 @@ public class Emulator extends Thread{
     }
 
     public void doNext() {
-        doNewOrder();
+        doPayment();
     }
 
     public void doNewOrder() {
@@ -63,6 +65,17 @@ public class Emulator extends Thread{
             newOrderTxn.printAfterRollback(this.printStream);
         else
             newOrderTxn.printResult(this.printStream);
+    }
+
+    public void doPayment() {
+        PaymentTxn paymentTxn = new PaymentTxn(w_id, w_cnt);
+        int ret = this.executor.doPayment(paymentTxn);
+        paymentTxn.printResult(this.printStream);
+    }
+
+    public void doStockLevel() {
+        StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
+        int ret = this.executor.doStockLevel(stockLevelTxn);
     }
 
 }

@@ -1,10 +1,16 @@
 package com.maomingming.tpcc.record;
 
 import com.maomingming.tpcc.RandomGenerator;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CustRecord implements Record{
+    @QuerySqlField
     public int c_id;
     public int c_d_id;
     public int c_w_id;
@@ -52,6 +58,18 @@ public class CustRecord implements Record{
         this.c_payment_cnt = 1;
         this.c_delivery_cnt = 0;
         this.c_data = RandomGenerator.makeAlphaString(300, 500);
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int w_id = (int)key.get("c_w_id");
+        int d_id = (int)key.get("c_d_id");
+        IntStream c_ids;
+        if (key.containsKey("c_id")) {
+            c_ids = IntStream.of((int)key.get("c_id"));
+        } else {
+            c_ids = IntStream.range(1, 3001);
+        }
+        return c_ids.mapToObj(c_id -> getKey(w_id, d_id, c_id)).collect(Collectors.toSet());
     }
 
     public static String getKey(int c_w_id, int c_d_id, int c_id) {

@@ -36,7 +36,7 @@ public class RandomGenerator {
         return makeLastName(makeNURand(255, 0, 999, c_last_load));
     }
 
-    public static String makeLastNameForRun(int c_id) {
+    public static String makeLastNameForRun() {
         return makeLastName(makeNURand(255, 0, 999, c_last_run));
     }
 
