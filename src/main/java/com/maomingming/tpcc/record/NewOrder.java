@@ -5,6 +5,8 @@ public class NewOrder implements Record{
     public int no_d_id;
     public int no_w_id;
 
+    public String no_data = "none";
+
     public NewOrder(int o_id, int d_id, int w_id) {
         this.no_o_id = o_id;
         this.no_d_id = d_id;

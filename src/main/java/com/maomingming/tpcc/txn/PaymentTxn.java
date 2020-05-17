@@ -3,6 +3,7 @@ package com.maomingming.tpcc.txn;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class PaymentTxn {
@@ -12,7 +13,7 @@ public class PaymentTxn {
     public int c_id;
     public int c_d_id;
     public int c_w_id;
-    public float h_amount;
+    public BigDecimal h_amount;
     public String c_last;
 
     public Date h_date;
@@ -64,7 +65,7 @@ public class PaymentTxn {
                     c_w_id += 1;
             }
         }
-        h_amount = RandomGenerator.makeFloat(1.00f, 5000.00f, 0.01f);
+        h_amount = RandomGenerator.makeDecimal(100, 500000, 2);
     }
 
     public void printResult(PrintStream printStream) {

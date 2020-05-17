@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class History implements Record{
     private static AtomicInteger h_cnt = new AtomicInteger(0);
-    int h_id;
+    public int h_id;
     public int h_c_id;
     public int h_c_d_id;
     public int h_d_id;

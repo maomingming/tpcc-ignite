@@ -3,6 +3,7 @@ package com.maomingming.tpcc.record;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -24,10 +25,10 @@ public class Customer implements Record, Serializable {
     public String c_phone;
     public Date c_since;
     public String c_credit;
-    public float c_credit_lim;
-    public float c_discount;
-    public float c_balance;
-    public float c_ytd_payment;
+    public BigDecimal c_credit_lim;
+    public BigDecimal c_discount;
+    public BigDecimal c_balance;
+    public BigDecimal c_ytd_payment;
     public int c_payment_cnt;
     public int c_delivery_cnt;
     public String c_data;
@@ -50,11 +51,10 @@ public class Customer implements Record, Serializable {
             this.c_credit = "BC";
         else
             this.c_credit = "GC";
-        this.c_credit_lim = 50000.00f;
-        this.c_discount = RandomGenerator.makeFloat(0.0f, 0.5f, 0.0001f);
-        System.out.println(c_discount);
-        this.c_balance = -10.00f;
-        this.c_ytd_payment = 10.00f;
+        this.c_credit_lim = new BigDecimal("50000.00");
+        this.c_discount = RandomGenerator.makeDecimal(0, 5000, 4);
+        this.c_balance = new BigDecimal("-10.00");
+        this.c_ytd_payment = new BigDecimal("10.00");
         this.c_payment_cnt = 1;
         this.c_delivery_cnt = 0;
         this.c_data = RandomGenerator.makeAlphaString(300, 500);

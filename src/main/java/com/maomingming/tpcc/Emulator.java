@@ -21,7 +21,7 @@ public class Emulator extends Thread{
         for (int i = 0; i < 1000000; i ++) {
             doNext();
             Counter.cnt.incrementAndGet();
-            int waitTime = (int)(-Math.log(RandomGenerator.makeFloat(0.001f, 0.999f, 0.001f)) * 1200);
+            int waitTime = 1200;
             try {
                 sleep(waitTime);
             } catch (InterruptedException e) {

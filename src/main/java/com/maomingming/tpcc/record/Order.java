@@ -6,9 +6,9 @@ import java.util.Date;
 
 public class Order implements Record{
     public int o_id;
-    public int o_c_id;
     public int o_d_id;
     public int o_w_id;
+    public int o_c_id;
     public Date o_entry_d;
     public int o_carrier_id;
     public int o_ol_cnt;

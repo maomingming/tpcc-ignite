@@ -11,7 +11,14 @@ public class Constant {
 
 
     public static Map<String, String> tableToRecord = ImmutableMap.<String, String>builder()
-            .put("CUSTOMER", "Customer")
+            .put("WAREHOUSE", "Warehouse")
             .put("DISTRICT", "District")
+            .put("CUSTOMER", "Customer")
+            .put("HISTORY", "History")
+            .put("NEW_ORDER", "NewOrder")
+            .put("ORDER", "Order")
+            .put("ORDER_LINE", "OrderLine")
+            .put("ITEM", "Item")
+            .put("STOCK", "Stock")
             .build();
 }

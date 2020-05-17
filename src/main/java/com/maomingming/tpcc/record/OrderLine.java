@@ -2,6 +2,7 @@ package com.maomingming.tpcc.record;
 
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class OrderLine implements Record {
@@ -13,7 +14,7 @@ public class OrderLine implements Record {
     public int ol_supply_w_id;
     public Date ol_delivery_d;
     public int ol_quantity;
-    public float ol_amount;
+    public BigDecimal ol_amount;
     public String ol_dist_info;
 
     public OrderLine(int o_id, int d_id, int w_id, int number, Date entryD) {
@@ -27,13 +28,13 @@ public class OrderLine implements Record {
             this.ol_delivery_d = entryD;
         this.ol_quantity = 5;
         if (o_id < 2101)
-            this.ol_amount = 0.00f;
+            this.ol_amount = new BigDecimal("0.00");
         else
-            this.ol_amount = RandomGenerator.makeFloat(0.01f, 9999.99f, 0.01f);
+            this.ol_amount = RandomGenerator.makeDecimal(1, 999999, 2);
         this.ol_dist_info = RandomGenerator.makeAlphaString(24, 24);
     }
 
-    public OrderLine(int o_id, int d_id, int w_id, int number, int i_id, int supply_w_id, int quantity, float amount, String dist_info) {
+    public OrderLine(int o_id, int d_id, int w_id, int number, int i_id, int supply_w_id, int quantity, BigDecimal amount, String dist_info) {
         this.ol_o_id = o_id;
         this.ol_d_id = d_id;
         this.ol_w_id = w_id;

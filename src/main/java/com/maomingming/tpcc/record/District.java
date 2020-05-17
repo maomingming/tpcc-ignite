@@ -2,6 +2,8 @@ package com.maomingming.tpcc.record;
 
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.math.BigDecimal;
+
 public class District implements Record{
     public int d_id;
     public int d_w_id;
@@ -11,8 +13,8 @@ public class District implements Record{
     public String d_city;
     public String d_state;
     public String d_zip;
-    public float d_tax;
-    public float d_ytd;
+    public BigDecimal d_tax;
+    public BigDecimal d_ytd;
     public int d_next_o_id;
 
     public District(int id, int w_id) {
@@ -24,8 +26,8 @@ public class District implements Record{
         this.d_city = RandomGenerator.makeAlphaString(10, 20);
         this.d_state = RandomGenerator.makeAlphaString(2,2);
         this.d_zip = RandomGenerator.makeZip();
-        this.d_tax = RandomGenerator.makeFloat(0.0000f, 0.2000f, 0.0001f);
-        this.d_ytd = 30000.00f;
+        this.d_tax = RandomGenerator.makeDecimal(0, 2000, 4);
+        this.d_ytd = new BigDecimal("30000.00");
         this.d_next_o_id = 3001;
     }
 

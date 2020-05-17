@@ -1,6 +1,7 @@
 package com.maomingming.tpcc.util;
 
 import java.awt.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -65,12 +66,9 @@ public class RandomGenerator {
         return rand.nextInt(y-x+1) + x;
     }
 
-    public static float makeFloat(float x, float y, float unit) {
-        int xInt = (int)(x / unit + 0.5);
-        int yInt = (int)(y / unit + 0.5);
-        int n = makeNumber(xInt, yInt);
-        System.out.println(n);
-        return n * unit;
+    public static BigDecimal makeDecimal(int unscaledX, int unscaledY, int scale) {
+        int n = makeNumber(unscaledX, unscaledY);
+        return BigDecimal.valueOf(n, scale);
     }
 
     public static String makeString(String alphabet, int x, int y) {
