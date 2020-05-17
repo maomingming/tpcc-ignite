@@ -32,39 +32,39 @@
             <list>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="Customer"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="DISTRICT"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="HISTORY"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ITEM"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="NEW-ORDER"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ORDER-LINE"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ORDER"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="STOCK"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="WAREHOUSE"/>
-                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
             </list>
         </property>

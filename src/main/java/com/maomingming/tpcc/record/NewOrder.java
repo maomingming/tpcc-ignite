@@ -1,11 +1,11 @@
 package com.maomingming.tpcc.record;
 
-public class NewOrdRecord implements Record{
+public class NewOrder implements Record{
     public int no_o_id;
     public int no_d_id;
     public int no_w_id;
 
-    public NewOrdRecord(int o_id, int d_id, int w_id) {
+    public NewOrder(int o_id, int d_id, int w_id) {
         this.no_o_id = o_id;
         this.no_d_id = d_id;
         this.no_w_id = w_id;

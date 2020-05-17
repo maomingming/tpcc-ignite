@@ -1,10 +1,10 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.Date;
 
-public class OrdLineRecord implements Record {
+public class OrderLine implements Record {
     public int ol_o_id;
     public int ol_d_id;
     public int ol_w_id;
@@ -16,7 +16,7 @@ public class OrdLineRecord implements Record {
     public float ol_amount;
     public String ol_dist_info;
 
-    public OrdLineRecord(int o_id, int d_id, int w_id, int number, Date entryD) {
+    public OrderLine(int o_id, int d_id, int w_id, int number, Date entryD) {
         this.ol_o_id = o_id;
         this.ol_d_id = d_id;
         this.ol_w_id = w_id;
@@ -33,7 +33,7 @@ public class OrdLineRecord implements Record {
         this.ol_dist_info = RandomGenerator.makeAlphaString(24, 24);
     }
 
-    public OrdLineRecord(int o_id, int d_id, int w_id, int number, int i_id, int supply_w_id, int quantity, float amount, String dist_info) {
+    public OrderLine(int o_id, int d_id, int w_id, int number, int i_id, int supply_w_id, int quantity, float amount, String dist_info) {
         this.ol_o_id = o_id;
         this.ol_d_id = d_id;
         this.ol_w_id = w_id;

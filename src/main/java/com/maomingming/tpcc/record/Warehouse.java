@@ -1,8 +1,8 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
-public class WareRecord implements Record {
+public class Warehouse implements Record {
     public int w_id;
     public String w_name;
     public String w_street_1;
@@ -13,7 +13,7 @@ public class WareRecord implements Record {
     public float w_tax;
     public float w_ytd;
 
-    public WareRecord(int id) {
+    public Warehouse(int id) {
         this.w_id = id;
         this.w_name = RandomGenerator.makeAlphaString(6, 10);
         this.w_street_1 = RandomGenerator.makeAlphaString(10, 20);

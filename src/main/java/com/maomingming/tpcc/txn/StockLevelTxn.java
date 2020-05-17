@@ -1,6 +1,6 @@
 package com.maomingming.tpcc.txn;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
 public class StockLevelTxn {
     public int w_id;

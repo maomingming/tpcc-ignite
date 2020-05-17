@@ -1,8 +1,8 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
-public class DistRecord implements Record{
+public class District implements Record{
     public int d_id;
     public int d_w_id;
     public String d_name;
@@ -15,7 +15,7 @@ public class DistRecord implements Record{
     public float d_ytd;
     public int d_next_o_id;
 
-    public DistRecord(int id, int w_id) {
+    public District(int id, int w_id) {
         this.d_id = id;
         this.d_w_id = w_id;
         this.d_name = RandomGenerator.makeAlphaString(6, 10);

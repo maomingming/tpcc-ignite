@@ -1,8 +1,8 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
-public class ItemRecord implements Record {
+public class Item implements Record {
 
     public int i_id;
     public int i_im_id;
@@ -17,7 +17,7 @@ public class ItemRecord implements Record {
         return getKey(i_id);
     }
 
-    public ItemRecord(int id) {
+    public Item(int id) {
         this.i_id = id;
         this.i_im_id = RandomGenerator.makeNumber(1, 10000);
         this.i_name = RandomGenerator.makeAlphaString(14, 24);

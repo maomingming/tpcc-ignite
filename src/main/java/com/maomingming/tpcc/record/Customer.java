@@ -1,16 +1,15 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
-import org.apache.ignite.cache.query.annotations.QuerySqlField;
+import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class CustRecord implements Record{
-    @QuerySqlField
+public class Customer implements Record, Serializable {
     public int c_id;
     public int c_d_id;
     public int c_w_id;
@@ -33,7 +32,7 @@ public class CustRecord implements Record{
     public int c_delivery_cnt;
     public String c_data;
 
-    public CustRecord(int id, int d_id, int d_w_id) {
+    public Customer(int id, int d_id, int d_w_id) {
         this.c_id = id;
         this.c_d_id = d_id;
         this.c_w_id = d_w_id;
@@ -43,7 +42,7 @@ public class CustRecord implements Record{
         this.c_street_1 = RandomGenerator.makeAlphaString(10, 20);
         this.c_street_2 = RandomGenerator.makeAlphaString(10, 20);
         this.c_city = RandomGenerator.makeAlphaString(10, 20);
-        this.c_state = RandomGenerator.makeAlphaString(2,2);
+        this.c_state = RandomGenerator.makeAlphaString(2, 2);
         this.c_zip = RandomGenerator.makeZip();
         this.c_phone = RandomGenerator.makeNumString(16, 16);
         this.c_since = new Date();
@@ -53,6 +52,7 @@ public class CustRecord implements Record{
             this.c_credit = "GC";
         this.c_credit_lim = 50000.00f;
         this.c_discount = RandomGenerator.makeFloat(0.0f, 0.5f, 0.0001f);
+        System.out.println(c_discount);
         this.c_balance = -10.00f;
         this.c_ytd_payment = 10.00f;
         this.c_payment_cnt = 1;
@@ -61,11 +61,11 @@ public class CustRecord implements Record{
     }
 
     public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int w_id = (int)key.get("c_w_id");
-        int d_id = (int)key.get("c_d_id");
+        int w_id = (int) key.get("c_w_id");
+        int d_id = (int) key.get("c_d_id");
         IntStream c_ids;
         if (key.containsKey("c_id")) {
-            c_ids = IntStream.of((int)key.get("c_id"));
+            c_ids = IntStream.of((int) key.get("c_id"));
         } else {
             c_ids = IntStream.range(1, 3001);
         }
@@ -73,7 +73,7 @@ public class CustRecord implements Record{
     }
 
     public static String getKey(int c_w_id, int c_d_id, int c_id) {
-        return "C_W_ID=" + c_w_id + "&C_D_ID=" + c_d_id + "&C_ID" + c_id;
+        return "C_W_ID=" + c_w_id + "&C_D_ID=" + c_d_id + "&C_ID=" + c_id;
     }
 
     public String getKey() {

@@ -5,6 +5,7 @@ import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.txn.NewOrderTxn;
 import com.maomingming.tpcc.txn.PaymentTxn;
 import com.maomingming.tpcc.txn.StockLevelTxn;
+import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;

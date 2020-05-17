@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 public class Query {
 
     static Map<String, String> tableToRecord = ImmutableMap.<String, String>builder()
-            .put("CUSTOMER", "CustRecord")
-            .put("DISTRICT", "DistRecord")
+            .put("CUSTOMER", "Customer")
+            .put("DISTRICT", "District")
             .build();
 
     static public Record findOne(String tableName,

@@ -1,5 +1,6 @@
 package com.maomingming.tpcc.load;
 
+import com.maomingming.tpcc.util.Constant;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteDataStreamer;
@@ -16,10 +17,10 @@ public class StreamLoader implements Loader{
     HashMap<String, IgniteCache<String, Record>> caches = new HashMap<>();
     HashMap<String, IgniteDataStreamer<String, Record>> stmrs = new HashMap<>();
 
-    public StreamLoader() {
+    public void loadBegin() {
         Ignition.setClientMode(true);
         this.ignite = Ignition.start("config/transaction.xml");
-        for (String table : TABLES) {
+        for (String table : Constant.TABLES) {
             caches.put(table, this.ignite.getOrCreateCache(table));
             stmrs.put(table, this.ignite.dataStreamer(table));
         }
@@ -30,7 +31,7 @@ public class StreamLoader implements Loader{
     }
 
     public void loadFinish() {
-        for (String table : TABLES) {
+        for (String table : Constant.TABLES) {
             this.stmrs.get(table).close();
             this.caches.get(table).close();
         }

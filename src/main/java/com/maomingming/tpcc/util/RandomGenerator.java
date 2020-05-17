@@ -1,5 +1,6 @@
-package com.maomingming.tpcc;
+package com.maomingming.tpcc.util;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -68,6 +69,7 @@ public class RandomGenerator {
         int xInt = (int)(x / unit + 0.5);
         int yInt = (int)(y / unit + 0.5);
         int n = makeNumber(xInt, yInt);
+        System.out.println(n);
         return n * unit;
     }
 

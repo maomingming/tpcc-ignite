@@ -1,11 +1,11 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HistRecord implements Record{
+public class History implements Record{
     private static AtomicInteger h_cnt = new AtomicInteger(0);
     int h_id;
     public int h_c_id;
@@ -17,7 +17,7 @@ public class HistRecord implements Record{
     public float h_amount;
     public String h_data;
 
-    public HistRecord(int c_id, int d_id, int w_id) {
+    public History(int c_id, int d_id, int w_id) {
         this.h_id = h_cnt.incrementAndGet();
         this.h_c_id = c_id;
         this.h_c_d_id = d_id;
@@ -29,7 +29,7 @@ public class HistRecord implements Record{
         this.h_data = RandomGenerator.makeAlphaString(12, 24);
     }
 
-    public HistRecord(int c_id, int c_d_id, int c_w_id, int d_id, int w_id, Date date, float amount, String data) {
+    public History(int c_id, int c_d_id, int c_w_id, int d_id, int w_id, Date date, float amount, String data) {
         this.h_id = h_cnt.incrementAndGet();
         this.h_c_id = c_id;
         this.h_c_d_id = c_d_id;

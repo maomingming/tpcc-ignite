@@ -1,8 +1,8 @@
 package com.maomingming.tpcc.record;
 
-import com.maomingming.tpcc.RandomGenerator;
+import com.maomingming.tpcc.util.RandomGenerator;
 
-public class StockRecord implements Record{
+public class Stock implements Record{
     public int s_i_id;
     public int s_w_id;
     public int s_quantity;
@@ -13,7 +13,7 @@ public class StockRecord implements Record{
     public int s_remote_cnt;
     public String s_data;
 
-    public StockRecord(int i_id, int w_id) {
+    public Stock(int i_id, int w_id) {
         this.s_i_id = i_id;
         this.s_w_id = w_id;
         this.s_quantity = RandomGenerator.makeNumber(10, 100);
