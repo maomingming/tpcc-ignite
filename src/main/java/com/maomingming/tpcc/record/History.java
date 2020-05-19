@@ -3,6 +3,7 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +17,7 @@ public class History implements Record{
     public int h_c_w_id;
     public int h_w_id;
     public Date h_date;
-    public float h_amount;
+    public BigDecimal h_amount;
     public String h_data;
 
     public History() {}
@@ -29,11 +30,11 @@ public class History implements Record{
         this.h_c_w_id = w_id;
         this.h_w_id = w_id;
         this.h_date = new Date();
-        this.h_amount = 10.00f;
+        this.h_amount = new BigDecimal("10.00");
         this.h_data = RandomGenerator.makeAlphaString(12, 24);
     }
 
-    public History(int c_id, int c_d_id, int c_w_id, int d_id, int w_id, Date date, float amount, String data) {
+    public History(int c_id, int c_d_id, int c_w_id, int d_id, int w_id, Date date, BigDecimal amount, String data) {
         this.h_id = h_cnt.incrementAndGet();
         this.h_c_id = c_id;
         this.h_c_d_id = c_d_id;

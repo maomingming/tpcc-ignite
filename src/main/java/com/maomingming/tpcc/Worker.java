@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class Worker {
     int w_id;
@@ -121,72 +122,86 @@ public class Worker {
     }
 
     @SuppressWarnings("unchecked")
-    public int doPayment(PaymentTxn paymentTxn) {
-//        try (Transaction tx = this.ignite.transactions().txStart()) {
-//            Warehouse warehouse = wareCache.get(Warehouse.getKey(w_id));
-//            String w_name = warehouse.w_name;
-//            paymentTxn.w_street_1 = warehouse.w_street_1;
-//            paymentTxn.w_street_2 = warehouse.w_street_2;
-//            paymentTxn.w_city = warehouse.w_city;
-//            paymentTxn.w_state = warehouse.w_state;
-//            paymentTxn.w_zip = warehouse.w_zip;
-//            warehouse.w_ytd += paymentTxn.h_amount;
-//            wareCache.put(warehouse.getKey(), warehouse);
-//
-//            District district = distCache.get(District.getKey(w_id, paymentTxn.d_id));
-//            String d_name = district.d_name;
-//            paymentTxn.d_street_1 = district.d_street_1;
-//            paymentTxn.d_street_2 = district.d_street_2;
-//            paymentTxn.d_city = district.d_city;
-//            paymentTxn.d_state = district.d_state;
-//            paymentTxn.d_zip = district.d_zip;
-//            district.d_ytd += paymentTxn.h_amount;
-//            distCache.put(district.getKey(), district);
-//
-//            Customer customer;
-//            if (paymentTxn.c_id > 0) {
-//                customer = (Customer)Query.findOne("CUSTOMER", custCache,
-//                        ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id, "c_id", paymentTxn.c_id));
-//                paymentTxn.c_last = customer.c_last;
-//            } else {
-//                List<Customer> custRecords = (List<Customer>)Query.find("CUSTOMER", custCache,
-//                        ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id), null,
-//                        ImmutableMap.of("c_last", paymentTxn.c_last), "c_first");
-//                customer = custRecords.get(custRecords.size()/2);
-//                paymentTxn.c_id = customer.c_id;
-//            }
-////            customer.c_balance -= paymentTxn.h_amount;
-////            customer.c_ytd_payment += paymentTxn.h_amount;
-//            customer.c_payment_cnt ++;
-//            if (customer.c_credit.equals("BC")) {
-//                customer.c_data = customer.getKey() + "&" + District.getKey(w_id, paymentTxn.d_id)
-//                        + "&H_AMOUNT" + paymentTxn.h_amount + customer.c_data;
-//                if (customer.c_data.length() > 500)
-//                    customer.c_data = customer.c_data.substring(0, 500);
-//            }
-//            custCache.put(customer.getKey(), customer);
-//
-//            paymentTxn.c_first = customer.c_first;
-//            paymentTxn.c_middle = customer.c_middle;
-//            paymentTxn.c_street_1 = customer.c_street_1;
-//            paymentTxn.c_street_2 = customer.c_street_2;
-//            paymentTxn.c_city = customer.c_city;
-//            paymentTxn.c_state = customer.c_state;
-//            paymentTxn.c_zip = customer.c_zip;
-//            paymentTxn.c_phone = customer.c_phone;
-//            paymentTxn.c_since = customer.c_since;
-//            paymentTxn.c_credit = customer.c_credit;
-////            paymentTxn.c_credit_lim = customer.c_credit_lim;
-////            paymentTxn.c_discount = customer.c_discount;
-////            paymentTxn.c_balance = customer.c_balance;
-//
-//            paymentTxn.h_date = new Date();
-//            History history = new History(paymentTxn.c_id, paymentTxn.c_d_id, paymentTxn.c_w_id,
-//                    paymentTxn.d_id, w_id, paymentTxn.h_date, paymentTxn.h_amount, w_name + "    " + d_name);
-//            histCache.put(history.getKey(), history);
-//
-//            tx.commit();
-//        }
+    public int doPayment(PaymentTxn paymentTxn) throws TransactionRetryException {
+        executor.txStart();
+        Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE",
+                Arrays.asList("w_name", "w_street_1", "w_street_2", "w_city", "w_state", "w_zip", "w_ytd"),
+                ImmutableMap.<String, Object>builder().put("w_id", w_id).build());
+        String w_name = warehouse.w_name;
+        paymentTxn.w_street_1 = warehouse.w_street_1;
+        paymentTxn.w_street_2 = warehouse.w_street_2;
+        paymentTxn.w_city = warehouse.w_city;
+        paymentTxn.w_state = warehouse.w_state;
+        paymentTxn.w_zip = warehouse.w_zip;
+        warehouse.w_ytd = warehouse.w_ytd.add(paymentTxn.h_amount);
+        warehouse.w_id = w_id;
+        executor.update("WAREHOUSE", Arrays.asList("w_ytd"), warehouse);
+
+        District district = (District) executor.findOne("DISTRICT",
+                Arrays.asList("d_name", "d_street_1", "d_street_2", "d_city", "d_state", "d_zip", "d_ytd"),
+                ImmutableMap.<String, Object>builder().put("d_w_id", w_id).put("d_id", paymentTxn.d_id).build());
+        String d_name = district.d_name;
+        paymentTxn.d_street_1 = district.d_street_1;
+        paymentTxn.d_street_2 = district.d_street_2;
+        paymentTxn.d_city = district.d_city;
+        paymentTxn.d_state = district.d_state;
+        paymentTxn.d_zip = district.d_zip;
+        district.d_ytd = district.d_ytd.add(paymentTxn.h_amount);
+        executor.update("DISTRICT", Arrays.asList("d_ytd"), district);
+
+        Customer customer;
+        if (paymentTxn.c_id > 0) {
+            customer = (Customer)executor.findOne("CUSTOMER",
+                    Arrays.asList("c_last", "c_balance", "c_ytd_payment", "c_payment_cnt", "c_credit", "c_data",
+                            "c_first", "c_middle", "c_street_1", "c_street_2", "c_city", "c_state", "c_zip",
+                            "c_phone", "c_since", "c_credit_lim", "c_discount"),
+                    ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id, "c_id", paymentTxn.c_id));
+            paymentTxn.c_last = customer.c_last;
+            customer.c_id = paymentTxn.c_id;
+        } else {
+            List<Record> custRecords = executor.find("CUSTOMER",
+                    Arrays.asList("c_id", "c_balance", "c_ytd_payment", "c_payment_cnt", "c_credit", "c_data",
+                            "c_first", "c_middle", "c_street_1", "c_street_2", "c_city", "c_state", "c_zip",
+                            "c_phone", "c_since", "c_credit_lim", "c_discount"),
+                    ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id), null,
+                    ImmutableMap.of("c_last", paymentTxn.c_last), "c_first");
+            customer = (Customer) custRecords.get(custRecords.size()/2);
+            paymentTxn.c_id = customer.c_id;
+            customer.c_last = paymentTxn.c_last;
+        }
+        customer.c_balance = customer.c_balance.subtract(paymentTxn.h_amount);
+        customer.c_ytd_payment = customer.c_ytd_payment.add(paymentTxn.h_amount);
+        customer.c_payment_cnt ++;
+        if (customer.c_credit.equals("BC")) {
+            customer.c_data = customer.getKey() + "&" + District.getKey(w_id, paymentTxn.d_id)
+                    + "&H_AMOUNT" + paymentTxn.h_amount + customer.c_data;
+            if (customer.c_data.length() > 500)
+                customer.c_data = customer.c_data.substring(0, 500);
+        }
+        customer.c_w_id = w_id;
+        customer.c_d_id = paymentTxn.d_id;
+        executor.update("CUSTOMER", Arrays.asList("c_balance", "c_ytd_payment", "c_payment_cnt", "c_data"), customer);
+
+        paymentTxn.c_first = customer.c_first;
+        paymentTxn.c_middle = customer.c_middle;
+        paymentTxn.c_street_1 = customer.c_street_1;
+        paymentTxn.c_street_2 = customer.c_street_2;
+        paymentTxn.c_city = customer.c_city;
+        paymentTxn.c_state = customer.c_state;
+        paymentTxn.c_zip = customer.c_zip;
+        paymentTxn.c_phone = customer.c_phone;
+        paymentTxn.c_since = customer.c_since;
+        paymentTxn.c_credit = customer.c_credit;
+        paymentTxn.c_credit_lim = customer.c_credit_lim;
+        paymentTxn.c_discount = customer.c_discount;
+        paymentTxn.c_balance = customer.c_balance;
+
+        paymentTxn.h_date = new Date();
+        History history = new History(paymentTxn.c_id, paymentTxn.c_d_id, paymentTxn.c_w_id,
+                paymentTxn.d_id, w_id, paymentTxn.h_date, paymentTxn.h_amount, w_name + "    " + d_name);
+        executor.insert("HISTORY", history);
+
+        executor.txCommit();
         return 0;
     }
 

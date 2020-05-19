@@ -37,9 +37,9 @@ public class PaymentTxn {
     public String c_phone;
     public Date c_since;
     public String c_credit;
-    public float c_credit_lim;
-    public float c_discount;
-    public float c_balance;
+    public BigDecimal c_credit_lim;
+    public BigDecimal c_discount;
+    public BigDecimal c_balance;
     public String c_data;
 
     public PaymentTxn(int w_id, int w_cnt) {

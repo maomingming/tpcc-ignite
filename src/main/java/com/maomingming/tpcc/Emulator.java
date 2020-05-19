@@ -47,7 +47,7 @@ public class Emulator extends Thread{
     }
 
     public void doNext() {
-        doNewOrder();
+        doPayment();
     }
 
     public void doNewOrder() {
@@ -72,9 +72,18 @@ public class Emulator extends Thread{
     }
 
     public void doPayment() {
-//        PaymentTxn paymentTxn = new PaymentTxn(w_id, w_cnt);
-//        int ret = this.executor.doPayment(paymentTxn);
-//        paymentTxn.printResult(this.printStream);
+        PaymentTxn paymentTxn = new PaymentTxn(w_id, w_cnt);
+        Integer ret = null;
+        for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
+            try {
+                ret = worker.doPayment(paymentTxn);
+            } catch (TransactionRetryException e) {
+                System.out.printf("retry times: %d\n", i);
+            }
+        }
+        if (ret == null)
+            return;
+        paymentTxn.printResult(this.printStream);
     }
 
     public void doStockLevel() {
