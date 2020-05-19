@@ -21,7 +21,7 @@ public class Worker {
         executor = getExecutor(executorType);
     }
 
-    public int doNewOrder(NewOrderTxn newOrderTxn) {
+    public int doNewOrder(NewOrderTxn newOrderTxn) throws TransactionRetryException {
         executor.txStart();
         Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE",
                 Arrays.asList("w_tax"),
@@ -34,6 +34,8 @@ public class Worker {
         newOrderTxn.d_tax = district.d_tax;
         newOrderTxn.o_id = district.d_next_o_id;
         district.d_next_o_id++;
+        district.d_w_id = w_id;
+        district.d_id = newOrderTxn.d_id;
         executor.update("DISTRICT", Arrays.asList("d_next_o_id"), district);
 
         Customer customer = (Customer) executor.findOne("CUSTOMER",
@@ -59,6 +61,7 @@ public class Worker {
         NewOrder newOrder = new NewOrder(newOrderTxn.o_id, newOrderTxn.d_id, w_id);
         executor.insert("NEW_ORDER", newOrder);
 
+        newOrderTxn.totalAmount = BigDecimal.valueOf(0);
         for (int i = 0; i < newOrderTxn.o_ol_cnt; i++) {
             NewOrderTxn.InputRepeatingGroup input = newOrderTxn.inputRepeatingGroups[i];
             NewOrderTxn.OutputRepeatingGroup output = newOrderTxn.outputRepeatingGroups[i];
@@ -85,6 +88,8 @@ public class Worker {
             stock.s_order_cnt++;
             if (input.ol_supply_w_id != w_id)
                 stock.s_remote_cnt++;
+            stock.s_w_id = input.ol_supply_w_id;
+            stock.s_i_id = input.ol_i_id;
             executor.update("STOCK", Arrays.asList("s_quantity", "s_ytd", "s_order_cnt", "s_remote_cnt"), stock);
             output.s_quantity = stock.s_quantity;
             String s_dist = null;

@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class District implements Record{
     public int d_id;
@@ -19,6 +21,8 @@ public class District implements Record{
     public BigDecimal d_ytd;
     public int d_next_o_id;
 
+    public District() {}
+
     public District(int id, int w_id) {
         this.d_id = id;
         this.d_w_id = w_id;
@@ -31,6 +35,12 @@ public class District implements Record{
         this.d_tax = RandomGenerator.makeDecimal(0, 2000, 4);
         this.d_ytd = new BigDecimal("30000.00");
         this.d_next_o_id = 3001;
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int d_w_id = (int) key.get("d_w_id");
+        int d_id = (int) key.get("d_id");
+        return Collections.singleton(getKey(d_w_id, d_id));
     }
 
     public static String getKey(int d_w_id, int d_id) {

@@ -1,5 +1,6 @@
 package com.maomingming.tpcc.execute;
 
+import com.maomingming.tpcc.TransactionRetryException;
 import com.maomingming.tpcc.record.Record;
 import com.maomingming.tpcc.util.Constant;
 
@@ -60,8 +61,7 @@ public class SQLExecutor implements Executor {
                              Map<String, Object> equalFilter,
                              String sortBy) {
         StringBuilder sql = new StringBuilder("select ");
-        sql.append(String.join(", ", Collections.nCopies(selectColumn.size(), "?"))).append(" from \"").append(tableName).append("\" ");
-        boolean first = true;
+        sql.append(String.join(", ", selectColumn)).append(" from \"").append(tableName).append("\" ");
         Stream<String> whereStream = Stream.empty();
         if (key != null) {
             Stream<String> keyStream = key.keySet().stream().map(kk -> "(" + kk + " = ?)");
@@ -115,7 +115,7 @@ public class SQLExecutor implements Executor {
         return null;
     }
 
-    public void update(String tableName, List<String> selectColumn, Record r) {
+    public void update(String tableName, List<String> selectColumn, Record r) throws TransactionRetryException {
         String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
         try {
             Class<?> recordClass = Class.forName(recordName);
@@ -128,7 +128,6 @@ public class SQLExecutor implements Executor {
             Map<String, Object> keyMap = r.getKeyMap();
             String[] whereExpr = keyMap.keySet().stream().map(x -> x + " = ?").toArray(String[]::new);
             sql.append(String.join(" and ", whereExpr));
-
             try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
                 int index = 1;
                 for (String col : selectColumn) {
@@ -139,7 +138,15 @@ public class SQLExecutor implements Executor {
                     stmt.setObject(index++, obj);
                 stmt.executeUpdate();
             }
-        } catch (ClassNotFoundException | SQLException | IllegalAccessException | NoSuchFieldException e) {
+        } catch (SQLException e) {
+            if ("40001".equals(e.getSQLState())) {
+                // retry the transaction
+                txRollback();
+                throw new TransactionRetryException();
+            } else {
+                e.printStackTrace();
+            }
+        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
     }

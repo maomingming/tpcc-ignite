@@ -31,7 +31,7 @@
         <property name="cacheConfiguration">
             <list>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
-                    <property name="name" value="Customer"/>
+                    <property name="name" value="CUSTOMER"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
@@ -47,11 +47,11 @@
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
-                    <property name="name" value="NEW-ORDER"/>
+                    <property name="name" value="NEW_ORDER"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
-                    <property name="name" value="ORDER-LINE"/>
+                    <property name="name" value="ORDER_LINE"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">

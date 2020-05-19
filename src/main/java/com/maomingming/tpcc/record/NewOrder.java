@@ -2,7 +2,9 @@ package com.maomingming.tpcc.record;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class NewOrder implements Record{
     public int no_o_id;
@@ -11,10 +13,19 @@ public class NewOrder implements Record{
 
     public String no_data = "none";
 
+    public NewOrder() {}
+
     public NewOrder(int o_id, int d_id, int w_id) {
         this.no_o_id = o_id;
         this.no_d_id = d_id;
         this.no_w_id = w_id;
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int no_w_id = (int) key.get("no_w_id");
+        int no_d_id = (int) key.get("no_d_id");
+        int no_o_id = (int) key.get("no_o_id");
+        return Collections.singleton(getKey(no_w_id, no_d_id, no_o_id));
     }
 
     public static String getKey(int no_w_id, int no_d_id, int no_o_id) {

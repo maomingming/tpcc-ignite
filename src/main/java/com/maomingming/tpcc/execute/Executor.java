@@ -1,5 +1,6 @@
 package com.maomingming.tpcc.execute;
 
+import com.maomingming.tpcc.TransactionRetryException;
 import com.maomingming.tpcc.record.Record;
 
 import java.util.List;
@@ -23,8 +24,8 @@ public interface Executor {
                       Map<String, Object> equalFilter,
                       String sortBy);
 
-    void insert(String tableName, Record r);
-    void update(String tableName, List<String> selectColumn, Record r);
+    void insert(String tableName, Record r) throws TransactionRetryException;
+    void update(String tableName, List<String> selectColumn, Record r) throws TransactionRetryException;
 
     void executeFinish();
 }

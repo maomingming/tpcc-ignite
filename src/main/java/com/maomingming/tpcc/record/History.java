@@ -19,6 +19,8 @@ public class History implements Record{
     public float h_amount;
     public String h_data;
 
+    public History() {}
+
     public History(int c_id, int d_id, int w_id) {
         this.h_id = h_cnt.incrementAndGet();
         this.h_c_id = c_id;

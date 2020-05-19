@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class Item implements Record {
 
@@ -21,6 +23,8 @@ public class Item implements Record {
         return getKey(i_id);
     }
 
+    public Item() {}
+
     public Item(int id) {
         this.i_id = id;
         this.i_im_id = RandomGenerator.makeNumber(1, 10000);
@@ -29,6 +33,11 @@ public class Item implements Record {
         this.i_data = RandomGenerator.makeAlphaString(26, 50);
         if (RandomGenerator.makeBool(0.1f))
             this.i_data = RandomGenerator.fillOriginal(this.i_data);
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int i_id = (int) key.get("i_id");
+        return Collections.singleton(getKey(i_id));
     }
 
     public Map<String, Object> getKeyMap() {

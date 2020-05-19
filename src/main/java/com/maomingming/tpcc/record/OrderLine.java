@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 public class OrderLine implements Record {
     public int ol_o_id;
@@ -18,6 +20,8 @@ public class OrderLine implements Record {
     public int ol_quantity;
     public BigDecimal ol_amount;
     public String ol_dist_info;
+
+    public OrderLine() {}
 
     public OrderLine(int o_id, int d_id, int w_id, int number, Date entryD) {
         this.ol_o_id = o_id;
@@ -46,6 +50,14 @@ public class OrderLine implements Record {
         this.ol_quantity = quantity;
         this.ol_amount = amount;
         this.ol_dist_info = dist_info;
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int ol_w_id = (int) key.get("ol_w_id");
+        int ol_d_id = (int) key.get("ol_d_id");
+        int ol_o_id = (int) key.get("ol_o_id");
+        int ol_number = (int) key.get("ol_number");
+        return Collections.singleton(getKey(ol_w_id, ol_d_id, ol_o_id, ol_number));
     }
 
     public static String getKey(int ol_w_id, int ol_d_id, int ol_o_id, int ol_number) {

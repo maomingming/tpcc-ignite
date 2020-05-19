@@ -4,7 +4,11 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Warehouse implements Record {
     public int w_id;
@@ -17,6 +21,8 @@ public class Warehouse implements Record {
     public BigDecimal w_tax;
     public BigDecimal w_ytd;
 
+    public Warehouse(){}
+
     public Warehouse(int id) {
         this.w_id = id;
         this.w_name = RandomGenerator.makeAlphaString(6, 10);
@@ -27,6 +33,11 @@ public class Warehouse implements Record {
         this.w_zip = RandomGenerator.makeZip();
         this.w_tax = RandomGenerator.makeDecimal(0, 2000, 4);
         this.w_ytd = new BigDecimal("300000.00");
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int w_id = (int) key.get("w_id");
+        return Collections.singleton(getKey(w_id));
     }
 
     public static String getKey(int w_id) {

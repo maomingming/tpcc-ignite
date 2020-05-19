@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 public class Emulator extends Thread{
+    static int MAX_RETRY_TIMES = 10;
+
     int w_id;
     int t_id;
     int w_cnt;
@@ -22,7 +24,7 @@ public class Emulator extends Thread{
         for (int i = 0; i < 1000000; i ++) {
             doNext();
             Counter.cnt.incrementAndGet();
-            int waitTime = 600;
+            int waitTime = 100;
             try {
                 sleep(waitTime);
             } catch (InterruptedException e) {
@@ -44,17 +46,6 @@ public class Emulator extends Thread{
         worker = new Worker(executorType, w_id);
     }
 
-    private Executor getExecutor(String executorType, int w_id) throws Exception {
-        switch (executorType) {
-            case "KEY_VALUE_EXECUTOR":
-                return new KeyValueExecutor();
-            case "SQL_EXECUTOR":
-                return new SQLExecutor();
-            default:
-                throw new IllegalStateException("Unexpected value: " + executorType);
-        }
-    }
-
     public void doNext() {
         doNewOrder();
     }
@@ -62,7 +53,16 @@ public class Emulator extends Thread{
     public void doNewOrder() {
         NewOrderTxn newOrderTxn = new NewOrderTxn(w_id, w_cnt);
         long begin = System.currentTimeMillis();
-        int ret = worker.doNewOrder(newOrderTxn);
+        Integer ret = null;
+        for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
+            try {
+                ret = worker.doNewOrder(newOrderTxn);
+            } catch (TransactionRetryException e) {
+                System.out.printf("retry times: %d\n", i);
+            }
+        }
+        if (ret == null)
+            return;
         long end = System.currentTimeMillis();
         Counter.addResponseTime(end - begin);
         if (ret != 0)

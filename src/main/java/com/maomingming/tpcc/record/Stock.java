@@ -3,7 +3,9 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class Stock implements Record{
     public int s_i_id;
@@ -15,6 +17,8 @@ public class Stock implements Record{
     public int s_order_cnt;
     public int s_remote_cnt;
     public String s_data;
+
+    public Stock() {}
 
     public Stock(int i_id, int w_id) {
         this.s_i_id = i_id;
@@ -36,6 +40,12 @@ public class Stock implements Record{
         this.s_data = RandomGenerator.makeAlphaString(26, 50);
         if (RandomGenerator.makeBool(0.1f))
             this.s_data = RandomGenerator.fillOriginal(this.s_data);
+    }
+
+    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
+        int s_w_id = (int) key.get("s_w_id");
+        int s_i_id = (int) key.get("s_i_id");
+        return Collections.singleton(getKey(s_w_id, s_i_id));
     }
 
     public static String getKey(int s_w_id, int s_i_id) {

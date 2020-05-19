@@ -23,7 +23,7 @@ public class SQLLoader implements Loader{
         "W_TAX DECIMAL(4,4)," +
         "W_YTD DECIMAL(12,2)," +
         "PRIMARY KEY (W_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String district = "CREATE TABLE DISTRICT (" +
         "D_ID TINYINT NOT NULL," +
@@ -38,7 +38,7 @@ public class SQLLoader implements Loader{
         "D_YTD DECIMAL(12,2)," +
         "D_NEXT_O_ID INT," +
         "PRIMARY KEY (D_W_ID, D_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String customer = "CREATE TABLE CUSTOMER (" +
         "C_ID INT NOT NULL," +
@@ -63,7 +63,7 @@ public class SQLLoader implements Loader{
         "C_DELIVERY_CNT SMALLINT," +
         "C_DATA VARCHAR(500)," +
         "PRIMARY KEY(C_W_ID, C_D_ID, C_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String history = "CREATE TABLE HISTORY (" +
         "H_ID INT," +
@@ -76,7 +76,7 @@ public class SQLLoader implements Loader{
         "H_AMOUNT DECIMAL(6,2)," +
         "H_DATA VARCHAR(24)," +
         "PRIMARY KEY(H_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String newOrder = "CREATE TABLE NEW_ORDER (" +
         "NO_O_ID INT NOT NULL," +
@@ -84,7 +84,7 @@ public class SQLLoader implements Loader{
         "NO_W_ID SMALLINT NOT NULL," +
         "NO_DATA CHAR(4)," +
         "PRIMARY KEY(NO_W_ID, NO_D_ID, NO_O_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String order = "CREATE TABLE \"ORDER\" (" +
         "O_ID INT NOT NULL," +
@@ -96,7 +96,7 @@ public class SQLLoader implements Loader{
         "O_OL_CNT TINYINT," +
         "O_ALL_LOCAL TINYINT," +
         "PRIMARY KEY(O_W_ID, O_D_ID, O_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String orderLine = "CREATE TABLE ORDER_LINE (" +
         "OL_O_ID INT NOT NULL," +
@@ -110,7 +110,7 @@ public class SQLLoader implements Loader{
         "OL_AMOUNT DECIMAL(6,2)," +
         "OL_DIST_INFO CHAR(24)," +
         "PRIMARY KEY(OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String item = "CREATE TABLE ITEM (" +
         "I_ID INT NOT NULL," +
@@ -119,7 +119,7 @@ public class SQLLoader implements Loader{
         "I_PRICE DECIMAL(5,2)," +
         "I_DATA VARCHAR(50)," +
         "PRIMARY KEY(I_ID)" +
-    ")";
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
     String stock = "CREATE TABLE STOCK (" +
         "S_I_ID INT NOT NULL," +
@@ -140,8 +140,8 @@ public class SQLLoader implements Loader{
         "S_REMOTE_CNT SMALLINT," +
         "S_DATA VARCHAR(50)," +
         "PRIMARY KEY(S_W_ID, S_I_ID)" +
-    ")";
-    
+    ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
+
     public SQLLoader() throws Exception{
         Class.forName("org.apache.ignite.IgniteJdbcThinDriver");
         conn = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1");

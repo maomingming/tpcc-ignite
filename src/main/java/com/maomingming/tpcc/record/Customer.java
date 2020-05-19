@@ -6,6 +6,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,6 +34,8 @@ public class Customer implements Record, Serializable {
     public int c_payment_cnt;
     public int c_delivery_cnt;
     public String c_data;
+
+    public Customer() {}
 
     public Customer(int id, int d_id, int d_w_id) {
         this.c_id = id;
