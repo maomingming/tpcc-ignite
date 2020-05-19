@@ -17,7 +17,7 @@ public class StreamLoader implements Loader{
     HashMap<String, IgniteCache<String, Record>> caches = new HashMap<>();
     HashMap<String, IgniteDataStreamer<String, Record>> stmrs = new HashMap<>();
 
-    public void loadBegin() {
+    public StreamLoader() {
         Ignition.setClientMode(true);
         this.ignite = Ignition.start("config/transaction.xml");
         for (String table : Constant.TABLES) {

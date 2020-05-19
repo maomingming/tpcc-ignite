@@ -1,6 +1,9 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
+
+import java.util.Map;
 
 public class Stock implements Record{
     public int s_i_id;
@@ -43,30 +46,10 @@ public class Stock implements Record{
         return getKey(this.s_w_id, this.s_i_id);
     }
 
-    public String getDistInfo(int d_id) {
-        switch (d_id) {
-            case 1:
-                return s_dist_01;
-            case 2:
-                return s_dist_02;
-            case 3:
-                return s_dist_03;
-            case 4:
-                return s_dist_04;
-            case 5:
-                return s_dist_05;
-            case 6:
-                return s_dist_06;
-            case 7:
-                return s_dist_07;
-            case 8:
-                return s_dist_08;
-            case 9:
-                return s_dist_09;
-            case 10:
-                return s_dist_10;
-            default:
-                throw new IllegalStateException("Unexpected value: " + d_id);
-        }
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("s_w_id", s_w_id)
+                .put("s_i_id", s_i_id)
+                .build();
     }
 }

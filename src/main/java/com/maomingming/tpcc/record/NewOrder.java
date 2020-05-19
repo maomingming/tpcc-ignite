@@ -1,5 +1,9 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
+
 public class NewOrder implements Record{
     public int no_o_id;
     public int no_d_id;
@@ -19,5 +23,13 @@ public class NewOrder implements Record{
 
     public String getKey() {
         return getKey(this.no_w_id, this.no_d_id, this.no_o_id);
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("no_w_id", no_w_id)
+                .put("no_d_id", no_d_id)
+                .put("no_o_id", no_o_id)
+                .build();
     }
 }

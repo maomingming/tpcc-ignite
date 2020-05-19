@@ -142,7 +142,7 @@ public class SQLLoader implements Loader{
         "PRIMARY KEY(S_W_ID, S_I_ID)" +
     ")";
     
-    public void loadBegin() throws Exception{
+    public SQLLoader() throws Exception{
         Class.forName("org.apache.ignite.IgniteJdbcThinDriver");
         conn = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1");
 

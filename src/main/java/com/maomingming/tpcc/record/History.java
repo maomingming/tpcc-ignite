@@ -1,8 +1,10 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class History implements Record{
@@ -43,5 +45,11 @@ public class History implements Record{
 
     public String getKey() {
         return "H_ID=" + h_id;
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("h_id", h_id)
+                .build();
     }
 }

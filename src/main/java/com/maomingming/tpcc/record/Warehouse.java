@@ -1,8 +1,10 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 public class Warehouse implements Record {
     public int w_id;
@@ -33,5 +35,11 @@ public class Warehouse implements Record {
 
     public String getKey() {
         return getKey(this.w_id);
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("w_id", w_id)
+                .build();
     }
 }

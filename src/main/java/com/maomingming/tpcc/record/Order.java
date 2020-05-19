@@ -1,8 +1,10 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.Date;
+import java.util.Map;
 
 public class Order implements Record{
     public int o_id;
@@ -14,7 +16,7 @@ public class Order implements Record{
     public int o_ol_cnt;
     public boolean o_all_local;
 
-    public Order(int id, int c_id, int d_id, int w_id) {
+    public Order(int id, int d_id, int w_id, int c_id) {
         this.o_id = id;
         this.o_c_id = c_id;
         this.o_d_id = d_id;
@@ -28,12 +30,12 @@ public class Order implements Record{
         this.o_all_local = true;
     }
 
-    public Order(int id, int c_id, int d_id, int w_id, int ol_cnt, boolean all_local) {
+    public Order(int id, int d_id, int w_id, int c_id, Date entry_d, int ol_cnt, boolean all_local) {
         this.o_id = id;
         this.o_c_id = c_id;
         this.o_d_id = d_id;
         this.o_w_id = w_id;
-        this.o_entry_d = new Date();
+        this.o_entry_d = entry_d;
         this.o_carrier_id = 0;
         this.o_ol_cnt = ol_cnt;
         this.o_all_local = all_local;
@@ -53,5 +55,13 @@ public class Order implements Record{
 
     public String getKey() {
         return getKey(this.o_w_id, this.o_d_id, this.o_id);
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("o_w_id", o_w_id)
+                .put("o_d_id", o_d_id)
+                .put("o_id", o_id)
+                .build();
     }
 }

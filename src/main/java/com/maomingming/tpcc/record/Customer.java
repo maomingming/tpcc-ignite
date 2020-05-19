@@ -1,5 +1,6 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.Serializable;
@@ -78,5 +79,13 @@ public class Customer implements Record, Serializable {
 
     public String getKey() {
         return getKey(this.c_w_id, this.c_d_id, this.c_id);
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("c_w_id", c_w_id)
+                .put("c_d_id", c_d_id)
+                .put("c_id", c_id)
+                .build();
     }
 }

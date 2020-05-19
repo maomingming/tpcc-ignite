@@ -1,9 +1,11 @@
 package com.maomingming.tpcc.record;
 
+import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Map;
 
 public class OrderLine implements Record {
     public int ol_o_id;
@@ -52,5 +54,14 @@ public class OrderLine implements Record {
 
     public String getKey() {
         return getKey(this.ol_w_id, this.ol_d_id, this.ol_o_id, this.ol_number);
+    }
+
+    public Map<String, Object> getKeyMap() {
+        return ImmutableMap.<String, Object>builder()
+                .put("ol_w_id", ol_w_id)
+                .put("ol_d_id", ol_d_id)
+                .put("ol_o_id", ol_o_id)
+                .put("ol_number", ol_number)
+                .build();
     }
 }

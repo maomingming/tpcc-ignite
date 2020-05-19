@@ -14,13 +14,12 @@ public class Populator {
     Loader loader;
     int w_cnt;
 
-    public Populator(String loaderType, int w_cnt) {
+    public Populator(String loaderType, int w_cnt) throws Exception {
         this.loader = getLoader(loaderType);
         this.w_cnt = w_cnt;
     }
 
-    public void loadAll() throws Exception {
-        loader.loadBegin();
+    public void loadAll() {
         for (int i_id = 1; i_id <= 100000; i_id++) {
             loader.load("ITEM", new Item(i_id));
         }
@@ -37,7 +36,7 @@ public class Populator {
                 }
                 ArrayList<Integer> perm = RandomGenerator.makePermutation(3000);
                 for (int o_id = 1; o_id <= 3000; o_id++) {
-                    Order order = new Order(o_id, perm.get(o_id-1), d_id, w_id);
+                    Order order = new Order(o_id, d_id, w_id, perm.get(o_id-1));
                     loader.load("ORDER", order);
                     OrderLine[] orderLines = order.makeOrdLineForLoad();
                     for (OrderLine orderLine : orderLines) {
@@ -51,7 +50,7 @@ public class Populator {
         loader.loadFinish();
     }
 
-    private Loader getLoader(String loaderType) {
+    private Loader getLoader(String loaderType) throws Exception {
         switch (loaderType) {
             case "STREAM_LOADER":
                 return new StreamLoader();

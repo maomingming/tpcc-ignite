@@ -3,6 +3,7 @@ package com.maomingming.tpcc.txn;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class NewOrderTxn {
@@ -33,20 +34,20 @@ public class NewOrderTxn {
 
     public String c_last;
     public String c_credit;
-    public float c_discount;
-    public float w_tax;
-    public float d_tax;
+    public BigDecimal c_discount;
+    public BigDecimal w_tax;
+    public BigDecimal d_tax;
     public int o_ol_cnt;
     public int o_id;
     public Date o_entry_d;
-    public float totalAmount;
+    public BigDecimal totalAmount;
 
     public class OutputRepeatingGroup {
         public String i_name;
         public int s_quantity;
         public char brand_generic;
-        public float i_price;
-        public float ol_amount;
+        public BigDecimal i_price;
+        public BigDecimal ol_amount;
     }
     public OutputRepeatingGroup[] outputRepeatingGroups;
 
