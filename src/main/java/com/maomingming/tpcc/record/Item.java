@@ -3,12 +3,13 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class Item implements Record {
+public class Item implements Record, Serializable {
 
     public int i_id;
     public int i_im_id;
@@ -35,9 +36,10 @@ public class Item implements Record {
             this.i_data = RandomGenerator.fillOriginal(this.i_data);
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int i_id = (int) key.get("i_id");
-        return Collections.singleton(getKey(i_id));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("i_id"))
+            return getKey((int) key.get("i_id"));
+        return null;
     }
 
     public Map<String, Object> getKeyMap() {

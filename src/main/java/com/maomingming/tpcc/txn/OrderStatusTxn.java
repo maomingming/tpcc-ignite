@@ -2,6 +2,7 @@ package com.maomingming.tpcc.txn;
 
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class OrderStatusTxn {
@@ -13,7 +14,7 @@ public class OrderStatusTxn {
 
     public String c_first;
     public String c_middle;
-    public float c_balance;
+    public BigDecimal c_balance;
     public int o_id;
     public Date o_entry_d;
     public int o_carrier_id;

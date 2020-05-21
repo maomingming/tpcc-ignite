@@ -3,6 +3,7 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Warehouse implements Record {
+public class Warehouse implements Record, Serializable {
     public int w_id;
     public String w_name;
     public String w_street_1;
@@ -35,9 +36,10 @@ public class Warehouse implements Record {
         this.w_ytd = new BigDecimal("300000.00");
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int w_id = (int) key.get("w_id");
-        return Collections.singleton(getKey(w_id));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("w_id"))
+            return getKey((int) key.get("w_id"));
+        return null;
     }
 
     public static String getKey(int w_id) {

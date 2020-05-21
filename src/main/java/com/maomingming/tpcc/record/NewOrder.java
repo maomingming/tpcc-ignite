@@ -2,11 +2,12 @@ package com.maomingming.tpcc.record;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class NewOrder implements Record{
+public class NewOrder implements Record, Serializable {
     public int no_o_id;
     public int no_d_id;
     public int no_w_id;
@@ -21,11 +22,10 @@ public class NewOrder implements Record{
         this.no_w_id = w_id;
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int no_w_id = (int) key.get("no_w_id");
-        int no_d_id = (int) key.get("no_d_id");
-        int no_o_id = (int) key.get("no_o_id");
-        return Collections.singleton(getKey(no_w_id, no_d_id, no_o_id));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("no_w_id") && key.containsKey("no_d_id") && key.containsKey("no_o_id"))
+            return getKey((int) key.get("no_w_id"), (int) key.get("no_d_id"), (int) key.get("no_o_id"));
+        return null;
     }
 
     public static String getKey(int no_w_id, int no_d_id, int no_o_id) {

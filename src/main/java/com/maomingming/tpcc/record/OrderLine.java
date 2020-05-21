@@ -3,13 +3,14 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-public class OrderLine implements Record {
+public class OrderLine implements Record, Serializable {
     public int ol_o_id;
     public int ol_d_id;
     public int ol_w_id;
@@ -52,13 +53,12 @@ public class OrderLine implements Record {
         this.ol_dist_info = dist_info;
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int ol_w_id = (int) key.get("ol_w_id");
-        int ol_d_id = (int) key.get("ol_d_id");
-        int ol_o_id = (int) key.get("ol_o_id");
-        int ol_number = (int) key.get("ol_number");
-        return Collections.singleton(getKey(ol_w_id, ol_d_id, ol_o_id, ol_number));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("ol_w_id") && key.containsKey("ol_d_id") && key.containsKey("ol_o_id") && key.containsKey("ol_number"))
+            return getKey((int) key.get("ol_w_id"), (int) key.get("ol_d_id"), (int) key.get("ol_o_id"), (int) key.get("ol_number"));
+        return null;
     }
+
 
     public static String getKey(int ol_w_id, int ol_d_id, int ol_o_id, int ol_number) {
         return "OL_W_ID=" + ol_w_id + "&OL_D_ID=" + ol_d_id + "&OL_O_ID" + ol_o_id + "&OL_NUMBER" + ol_number;

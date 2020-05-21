@@ -1,23 +1,39 @@
 package com.maomingming.tpcc.execute;
 
 import com.google.common.collect.ImmutableMap;
+import com.maomingming.tpcc.TransactionRetryException;
+import com.maomingming.tpcc.param.Projection;
+import com.maomingming.tpcc.param.Query;
+import com.maomingming.tpcc.param.Update;
 import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.txn.*;
 import com.maomingming.tpcc.util.Constant;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.binary.BinaryObject;
+import org.apache.ignite.binary.BinaryObjectBuilder;
+import org.apache.ignite.cache.CacheEntryProcessor;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.transactions.Transaction;
 
+import javax.cache.Cache;
+import javax.cache.CacheException;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.MutableEntry;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class KeyValueExecutor implements Executor {
+public class KeyValueExecutor {
     Ignite ignite;
     HashMap<String, IgniteCache<String, Record>> caches = new HashMap<>();
 
@@ -27,6 +43,7 @@ public class KeyValueExecutor implements Executor {
         Ignition.setClientMode(true);
         IgniteConfiguration conf = new IgniteConfiguration();
         conf.setIgniteInstanceName("CLIENT");
+        conf.setPeerClassLoadingEnabled(true);
         this.ignite = Ignition.getOrStart(conf);
         for (String table : Constant.TABLES) {
             caches.put(table, this.ignite.getOrCreateCache(table));
@@ -47,65 +64,154 @@ public class KeyValueExecutor implements Executor {
         currentTxn.close();
     }
 
-    public Record findOne(String tableName,
-                          List<String> selectColumn,
-                          Map<String, Object> key) {
-        List<Record> rs =  find(tableName, selectColumn, key, null, null, null);
-        if (rs == null || rs.size() == 0)
-            return null;
-        return rs.get(0);
-    }
-
-    public void insert(String tableName, Record r) {
-        caches.get(tableName).put(r.getKey(), r);
-    }
-    public void update(String tableName, List<String> selectColumn, Record r) {
-        caches.get(tableName).put(r.getKey(), r);
-    }
-
     @SuppressWarnings("unchecked")
-    public List<Record> find(String tableName,
-                             List<String> selectColumn,
-                             Map<String, Object> key,
-                             Map<String, Object[]> keys,
-                             Map<String, Object> equalFilter,
-                             String sortBy) {
-
+    public Record findOne(String tableName,
+                          Query query,
+                          Projection projection) {
         String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
         IgniteCache<String, Record> cache = caches.get(tableName);
         try {
             Class<?> recordClass = Class.forName(recordName);
-            Method keyMethod = recordClass.getMethod("getKeys", Map.class, Map.class);
-            Set<String> stringKeys = (Set<String>) keyMethod.invoke(null, key, keys);
-            Stream<Record> res = cache.getAll(stringKeys).values().stream();
-            if (equalFilter != null) {
-                for (Map.Entry<String, Object> e : equalFilter.entrySet()) {
-                    Field field = recordClass.getField(e.getKey());
-                    res = res.filter(record -> {
-                        try {
-                            return Objects.equals(field.get(record), e.getValue());
-                        } catch (IllegalAccessException ex) {
-                            ex.printStackTrace();
-                            return false;
-                        }
-                    });
-                }
-            }
-            if (sortBy != null) {
-                Field field = recordClass.getField(sortBy);
-                res = res.sorted((record1, record2) -> {
+
+            // try to get by key
+            Method keyMethod = recordClass.getMethod("getKey", Map.class);
+            Object keyString = keyMethod.invoke(null, query.equal);
+            if (keyString != null)
+                return cache.get((String) keyString);
+            List<Record> res = find(tableName, query, projection);
+            if (projection.sortBy != null) {
+                Field field = recordClass.getField(projection.sortBy);
+                res.sort((o1, o2) -> {
                     try {
-                        return ((Comparable<Object>) field.get(record1)).compareTo(field.get(record2));
+                        if (projection.asc.equals("ASC"))
+                            return ((Comparable<Object>) field.get(o1)).compareTo(field.get(o2));
+                        else
+                            return ((Comparable<Object>) field.get(o2)).compareTo(field.get(o1));
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }
                 });
             }
-            return res.collect(Collectors.toList());
+            if (res.isEmpty())
+                return null;
+            int index=0;
+            if (projection.loc.equals("MID"))
+                index = res.size()/2;
+            return res.get(index);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public void update(String tableName,
+                       Query query,
+                       Update update) throws TransactionRetryException{
+        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
+        try {
+            Class<?> recordClass = Class.forName(recordName);
+            Method keyMethod = recordClass.getMethod("getKey", Map.class);
+            String keyString = (String) keyMethod.invoke(null, query.equal);
+            System.out.println(keyString);
+            try {
+                cache.invoke(keyString, (CacheEntryProcessor<String, BinaryObject, Object>) (entry, objects) -> {
+                    BinaryObjectBuilder builder = entry.getValue().toBuilder();
+                    if (update.intIncrement != null) {
+                        for (Map.Entry<String, Integer> e : update.intIncrement.entrySet()) {
+                            builder.setField(e.getKey(), (int) builder.getField(e.getKey()) + e.getValue());
+                        }
+                    }
+                    entry.setValue(builder.build());
+                    return null;
+                });
+            } catch (CacheException e) {
+                if (currentTxn.isRollbackOnly()) {
+                    txRollback();
+                    throw new TransactionRetryException();
+                }
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public void insert(String tableName, Record r) {
+        caches.get(tableName).put(r.getKey(), r);
+    }
+
+    public List<Record> find(String tableName,
+                             Query query,
+                             Projection projection) {
+        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
+        try {
+            Class<?> recordClass = Class.forName(recordName);
+            IgniteBiPredicate<String, BinaryObject> filter = (IgniteBiPredicate<String, BinaryObject>) (s, record) -> {
+                for (Map.Entry<String, Object> e : query.equal.entrySet()) {
+                    if (!Objects.equals(record.field(e.getKey()), e.getValue()))
+                        return false;
+                }
+                return true;
+            };
+            List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+            ArrayList<Record> res = new ArrayList<>();
+            for (BinaryObject binaryObject : binaryRes) {
+                Record r = (Record) recordClass.newInstance();
+                for (String col : projection.selectColumn) {
+                    Field field = recordClass.getField(col);
+                    field.set(r, binaryObject.field(col));
+                }
+                res.add(r);
+            }
+            return res;
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
     }
+//
+//    @SuppressWarnings("unchecked")
+//    public List<Record> find(String tableName,
+//                             Query query,
+//                             Projection projection) {
+//
+//        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+//        IgniteCache<String, Record> cache = caches.get(tableName);
+//        try {
+//            Class<?> recordClass = Class.forName(recordName);
+//            IgniteBiPredicate<String, Record> filter = (IgniteBiPredicate<String, Record>) (s, record) -> {
+//                for (Map.Entry<String, Object> e : query.equal.entrySet()) {
+//                    try {
+//                        Field field = recordClass.getField(e.getKey());
+//                        if (!Objects.equals(field.get(record), e.getValue()))
+//                            return false;
+//                    } catch (IllegalAccessException | NoSuchFieldException ex) {
+//                        ex.printStackTrace();
+//                        return false;
+//                    }
+//                }
+//                return true;
+//            };
+//            List<Cache.Entry<String, Record>> rawRes = cache.query(new ScanQuery<>(filter)).getAll();
+//            Stream<Record> res = rawRes.stream().map(Cache.Entry::getValue);
+////            if (sortBy != null) {
+////                Field field = recordClass.getField(sortBy);
+////                res = res.sorted((record1, record2) -> {
+////                    try {
+////                        return ((Comparable<Object>) field.get(record1)).compareTo(field.get(record2));
+////                    } catch (IllegalAccessException e) {
+////                        throw new RuntimeException(e);
+////                    }
+////                });
+////            }
+//            return res.collect(Collectors.toList());
+//        } catch (ClassNotFoundException | NoSuchFieldException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void executeFinish() {
         for (String table : Constant.TABLES) {

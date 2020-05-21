@@ -9,8 +9,8 @@ import org.apache.ignite.cache.query.SqlFieldsQuery;
 public class Coordinator {
 
     static int w_cnt = 1;
-    static String loaderType = "SQL_LOADER";
-    static String executorType = "SQL_EXECUTOR";
+    static String loaderType = "STREAM_LOADER";
+    static String executorType = "KEY_VALUE_EXECUTOR";
 
     public static void main(String[] args) throws Exception {
         Populator populator = new Populator(loaderType, w_cnt);

@@ -64,16 +64,10 @@ public class Customer implements Record, Serializable {
         this.c_data = RandomGenerator.makeAlphaString(300, 500);
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int w_id = (int) key.get("c_w_id");
-        int d_id = (int) key.get("c_d_id");
-        IntStream c_ids;
-        if (key.containsKey("c_id")) {
-            c_ids = IntStream.of((int) key.get("c_id"));
-        } else {
-            c_ids = IntStream.range(1, 3001);
-        }
-        return c_ids.mapToObj(c_id -> getKey(w_id, d_id, c_id)).collect(Collectors.toSet());
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("c_w_id") && key.containsKey("c_d_id") && key.containsKey("c_id"))
+            return getKey((int) key.get("c_w_id"), (int) key.get("c_d_id"), (int) key.get("c_id"));
+        return null;
     }
 
     public static String getKey(int c_w_id, int c_d_id, int c_id) {

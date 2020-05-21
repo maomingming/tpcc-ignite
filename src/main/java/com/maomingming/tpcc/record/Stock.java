@@ -3,11 +3,12 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class Stock implements Record{
+public class Stock implements Record, Serializable {
     public int s_i_id;
     public int s_w_id;
     public int s_quantity;
@@ -42,10 +43,10 @@ public class Stock implements Record{
             this.s_data = RandomGenerator.fillOriginal(this.s_data);
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int s_w_id = (int) key.get("s_w_id");
-        int s_i_id = (int) key.get("s_i_id");
-        return Collections.singleton(getKey(s_w_id, s_i_id));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("s_w_id") && key.containsKey("s_i_id"))
+            return getKey((int) key.get("s_w_id"), (int) key.get("s_i_id"));
+        return null;
     }
 
     public static String getKey(int s_w_id, int s_i_id) {

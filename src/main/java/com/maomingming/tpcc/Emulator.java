@@ -78,7 +78,7 @@ public class Emulator extends Thread{
             try {
                 ret = worker.doPayment(paymentTxn);
             } catch (TransactionRetryException e) {
-                System.out.printf("retry times: %d\n", i);
+//                System.out.printf("retry times: %d\n", i);
             }
         }
         if (ret == null)

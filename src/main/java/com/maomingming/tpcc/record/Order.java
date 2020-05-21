@@ -3,12 +3,13 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-public class Order implements Record{
+public class Order implements Record, Serializable {
     public int o_id;
     public int o_d_id;
     public int o_w_id;
@@ -53,11 +54,10 @@ public class Order implements Record{
         return ordLine;
     }
 
-    public static Set<String> getKeys(Map<String, Object> key, Map<String, Object[]> keys) {
-        int o_w_id = (int) key.get("o_w_id");
-        int o_d_id = (int) key.get("o_d_id");
-        int o_id = (int) key.get("o_id");
-        return Collections.singleton(getKey(o_w_id, o_d_id, o_id));
+    public static String getKey(Map<String, Object> key) {
+        if (key.containsKey("o_w_id") && key.containsKey("o_d_id") && key.containsKey("o_id"))
+            return getKey((int) key.get("o_w_id"), (int) key.get("o_d_id"), (int) key.get("o_id"));
+        return null;
     }
 
     public static String getKey(int o_w_id, int o_d_id, int o_id) {

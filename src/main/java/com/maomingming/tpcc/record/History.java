@@ -3,12 +3,13 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class History implements Record{
+public class History implements Record, Serializable {
     private static AtomicInteger h_cnt = new AtomicInteger(0);
     public int h_id;
     public int h_c_id;
