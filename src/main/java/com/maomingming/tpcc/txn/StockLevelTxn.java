@@ -6,6 +6,7 @@ public class StockLevelTxn {
     public int w_id;
     public int d_id;
     public int threshold;
+    public int low_stock;
 
     public StockLevelTxn(int w_id, int t_id) {
         this.w_id = w_id;

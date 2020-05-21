@@ -4,18 +4,19 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.execute.SQLExecutor;
+import com.maomingming.tpcc.param.Aggregation;
 import com.maomingming.tpcc.param.Projection;
 import com.maomingming.tpcc.param.Query;
 import com.maomingming.tpcc.param.Update;
 import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.txn.*;
+import org.h2.util.New;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Worker {
     int w_id;
@@ -31,7 +32,7 @@ public class Worker {
         executor.txStart();
         Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE",
                 new Query(ImmutableMap.<String, Object>builder().put("w_id", w_id).build()),
-                new Projection("Warehouse", Arrays.asList("w_tax")));
+                new Projection("Warehouse", Collections.singletonList("w_tax")));
         newOrderTxn.w_tax = warehouse.w_tax;
 
         Query districtQuery = new Query(ImmutableMap.<String, Object>builder().put("d_w_id", w_id).put("d_id", newOrderTxn.d_id).build());
@@ -163,7 +164,7 @@ public class Worker {
                     new Projection("Customer", Arrays.asList("c_id", "c_credit", "c_data",
                             "c_first", "c_middle", "c_street_1", "c_street_2", "c_city", "c_state", "c_zip",
                             "c_phone", "c_since", "c_credit_lim", "c_discount", "c_balance"), "c_first", "ASC", "MID"));
-            if (customer == null){
+            if (customer == null) {
                 executor.txRollback();
                 return -1;
             }
@@ -218,7 +219,7 @@ public class Worker {
                     new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", orderStatusTxn.d_id, "c_last", orderStatusTxn.c_last)),
                     new Projection("Customer", Arrays.asList("c_id", "c_balance", "c_first", "c_middle"),
                             "c_first", "ASC", "MID"));
-            if (customer == null){
+            if (customer == null) {
                 executor.txRollback();
                 return -1;
             }
@@ -250,19 +251,58 @@ public class Worker {
         return 0;
     }
 
-    public int doDelivery(DeliveryTxn deliveryTxn) {
+    public int doDelivery(DeliveryTxn deliveryTxn) throws TransactionRetryException {
+        for (int d_id = 1; d_id <= 10; ++d_id) {
+            executor.txStart();
+            NewOrder newOrder = (NewOrder) executor.findOne("NEW_ORDER",
+                    new Query(ImmutableMap.of("no_w_id", w_id, "no_d_id", d_id)),
+                    new Projection("NewOrder", Collections.singletonList("no_o_id"), "no_o_id", "DESC", "FIRST"));
+            if (newOrder == null)
+                continue;
+            int o_id = newOrder.no_o_id;
+            executor.delete("NEW_ORDER", new Query(ImmutableMap.of("no_w_id", w_id, "no_d_id", d_id, "no_o_id", o_id)));
+
+            Query orderQuery = new Query(ImmutableMap.of("o_w_id", w_id, "o_d_id", d_id, "o_id", o_id));
+            Order order = (Order) executor.findOne("ORDER", orderQuery,
+                    new Projection("Order", Collections.singletonList("o_c_id")));
+            executor.update("ORDER", orderQuery, new Update(null, null, ImmutableMap.of("o_carrier_id", deliveryTxn.o_carrier_id)));
+            int c_id = order.o_c_id;
+
+            Query orderLineQuery = new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", d_id, "ol_o_id", o_id));
+            BigDecimal amount = (BigDecimal) executor.aggregation("ORDER_LINE", orderLineQuery, new Aggregation("SUM", "ol_amount", "DECIMAL"));
+            executor.update("ORDER_LINE", orderLineQuery,
+                    new Update(null, null, ImmutableMap.of("ol_delivery_d", new Date())));
+
+            executor.update("CUSTOMER",
+                    new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", d_id, "c_id", c_id)),
+                    new Update(ImmutableMap.of("c_delivery_cnt", 1), ImmutableMap.of("c_balance", amount)));
+            executor.txCommit();
+        }
         return 0;
     }
 
     public int doStockLevel(StockLevelTxn stockLevelTxn) {
-//        try (Transaction tx = this.ignite.transactions().txStart()) {
-//            District district = distCache.get(District.getKey(stockLevelTxn.w_id, stockLevelTxn.d_id));
-//            int d_next_o_id = district.d_next_o_id;
-//
-//
-//
-//            tx.commit();
-//        }
+        executor.txStart();
+        District district = (District) executor.findOne("DISTRICT",
+                new Query(ImmutableMap.of("d_w_id", w_id, "d_id", stockLevelTxn.d_id)),
+                new Projection("District", Collections.singletonList("d_next_o_id")));
+        int next_o_id = district.d_next_o_id;
+
+        List<Record> orderLines = executor.find("ORDER_LINE",
+                new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", stockLevelTxn.d_id),
+                        ImmutableMap.of("ol_o_id", IntStream.range(next_o_id-20, next_o_id).boxed().collect(Collectors.toSet()))),
+                new Projection("OrderLine", Collections.singletonList("ol_i_id")));
+
+        Set<Integer> i_ids = new HashSet<>();
+        for (Record orderLine : orderLines) {
+            i_ids.add(((OrderLine) orderLine).ol_i_id);
+        }
+        stockLevelTxn.low_stock = (int) executor.aggregation("STOCK",
+                new Query(ImmutableMap.of("s_w_id", w_id),
+                        ImmutableMap.of("s_i_id", i_ids),
+                        ImmutableMap.of("s_quantity", stockLevelTxn.threshold)),
+                new Aggregation("COUNT"));
+        executor.txCommit();
         return 0;
     }
 

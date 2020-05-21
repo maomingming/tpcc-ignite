@@ -3,10 +3,7 @@ package com.maomingming.tpcc;
 import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.execute.SQLExecutor;
-import com.maomingming.tpcc.txn.NewOrderTxn;
-import com.maomingming.tpcc.txn.OrderStatusTxn;
-import com.maomingming.tpcc.txn.PaymentTxn;
-import com.maomingming.tpcc.txn.StockLevelTxn;
+import com.maomingming.tpcc.txn.*;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.FileNotFoundException;
@@ -48,7 +45,7 @@ public class Emulator extends Thread{
     }
 
     public void doNext() {
-        doOrderStatus();
+        doStockLevel();
     }
 
     public void doNewOrder() {
@@ -90,6 +87,23 @@ public class Emulator extends Thread{
     public void doOrderStatus() {
         OrderStatusTxn orderStatusTxn = new OrderStatusTxn(w_id);
         int ret = worker.doOrderStatus(orderStatusTxn);
+    }
+
+    public void doDelivery() {
+        DeliveryTxn deliveryTxn = new DeliveryTxn(w_id);
+        Integer ret = null;
+        for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
+            try {
+                ret = worker.doDelivery(deliveryTxn);
+            } catch (TransactionRetryException e) {
+//                System.out.printf("retry times: %d\n", i);
+            }
+        }
+    }
+
+    public void doStockLevel() {
+        StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
+        int ret = worker.doStockLevel(stockLevelTxn);
     }
 
 }

@@ -2,6 +2,7 @@ package com.maomingming.tpcc.execute;
 
 import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.TransactionRetryException;
+import com.maomingming.tpcc.param.Aggregation;
 import com.maomingming.tpcc.param.Projection;
 import com.maomingming.tpcc.param.Query;
 import com.maomingming.tpcc.param.Update;
@@ -114,31 +115,41 @@ public class KeyValueExecutor {
             Class<?> recordClass = Class.forName(recordName);
             Method keyMethod = recordClass.getMethod("getKey", Map.class);
             String keyString = (String) keyMethod.invoke(null, query.equal);
-            try {
-                cache.invoke(keyString, (CacheEntryProcessor<String, BinaryObject, Object>) (entry, objects) -> {
-                    BinaryObjectBuilder builder = entry.getValue().toBuilder();
-                    if (update.intIncrement != null) {
-                        for (Map.Entry<String, Integer> e : update.intIncrement.entrySet()) {
-                            builder.setField(e.getKey(), (int) builder.getField(e.getKey()) + e.getValue());
+            List<String> keyList;
+            if (keyString == null) {
+                IgniteCache<String, BinaryObject> binaryCache = cache.withKeepBinary();
+                IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
+                keyList = binaryCache.query(new ScanQuery<>(filter), Cache.Entry::getKey).getAll();
+            } else {
+                keyList = Collections.singletonList(keyString);
+            }
+            for (String key : keyList) {
+                try {
+                    cache.invoke(key, (CacheEntryProcessor<String, BinaryObject, Object>) (entry, objects) -> {
+                        BinaryObjectBuilder builder = entry.getValue().toBuilder();
+                        if (update.intIncrement != null) {
+                            for (Map.Entry<String, Integer> e : update.intIncrement.entrySet()) {
+                                builder.setField(e.getKey(), (int) builder.getField(e.getKey()) + e.getValue());
+                            }
                         }
-                    }
-                    if (update.decimalIncrement != null) {
-                        for (Map.Entry<String, BigDecimal> e : update.decimalIncrement.entrySet()) {
-                            builder.setField(e.getKey(), ((BigDecimal) builder.getField(e.getKey())).add(e.getValue()));
+                        if (update.decimalIncrement != null) {
+                            for (Map.Entry<String, BigDecimal> e : update.decimalIncrement.entrySet()) {
+                                builder.setField(e.getKey(), ((BigDecimal) builder.getField(e.getKey())).add(e.getValue()));
+                            }
                         }
-                    }
-                    if (update.replace != null) {
-                        for (Map.Entry<String, Object> e : update.replace.entrySet()) {
-                            builder.setField(e.getKey(), e.getValue());
+                        if (update.replace != null) {
+                            for (Map.Entry<String, Object> e : update.replace.entrySet()) {
+                                builder.setField(e.getKey(), e.getValue());
+                            }
                         }
+                        entry.setValue(builder.build());
+                        return null;
+                    });
+                } catch (CacheException e) {
+                    if (currentTxn.isRollbackOnly()) {
+                        txRollback();
+                        throw new TransactionRetryException();
                     }
-                    entry.setValue(builder.build());
-                    return null;
-                });
-            } catch (CacheException e) {
-                if (currentTxn.isRollbackOnly()) {
-                    txRollback();
-                    throw new TransactionRetryException();
                 }
             }
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -157,6 +168,18 @@ public class KeyValueExecutor {
             for (Map.Entry<String, Object> e : query.equal.entrySet()) {
                 if (!Objects.equals(record.field(e.getKey()), e.getValue()))
                     return false;
+            }
+            if (query.in != null) {
+                for (Map.Entry<String, Set<Integer>> e : query.in.entrySet()) {
+                    if (!e.getValue().contains((Integer)record.field(e.getKey())))
+                        return false;
+                }
+            }
+            if (query.lessThan != null) {
+                for (Map.Entry<String, Comparable<?>> e : query.lessThan.entrySet()) {
+                    if (e.getValue().compareTo(record.field(e.getKey()))<=0)
+                        return false;
+                }
             }
             return true;
         };
@@ -183,46 +206,47 @@ public class KeyValueExecutor {
         List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
         return binaryRes.stream().map(o -> binaryToRecord(o, projection)).collect(Collectors.toList());
     }
-//
-//    @SuppressWarnings("unchecked")
-//    public List<Record> find(String tableName,
-//                             Query query,
-//                             Projection projection) {
-//
-//        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
-//        IgniteCache<String, Record> cache = caches.get(tableName);
-//        try {
-//            Class<?> recordClass = Class.forName(recordName);
-//            IgniteBiPredicate<String, Record> filter = (IgniteBiPredicate<String, Record>) (s, record) -> {
-//                for (Map.Entry<String, Object> e : query.equal.entrySet()) {
-//                    try {
-//                        Field field = recordClass.getField(e.getKey());
-//                        if (!Objects.equals(field.get(record), e.getValue()))
-//                            return false;
-//                    } catch (IllegalAccessException | NoSuchFieldException ex) {
-//                        ex.printStackTrace();
-//                        return false;
-//                    }
-//                }
-//                return true;
-//            };
-//            List<Cache.Entry<String, Record>> rawRes = cache.query(new ScanQuery<>(filter)).getAll();
-//            Stream<Record> res = rawRes.stream().map(Cache.Entry::getValue);
-////            if (sortBy != null) {
-////                Field field = recordClass.getField(sortBy);
-////                res = res.sorted((record1, record2) -> {
-////                    try {
-////                        return ((Comparable<Object>) field.get(record1)).compareTo(field.get(record2));
-////                    } catch (IllegalAccessException e) {
-////                        throw new RuntimeException(e);
-////                    }
-////                });
-////            }
-//            return res.collect(Collectors.toList());
-//        } catch (ClassNotFoundException | NoSuchFieldException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+
+    public void delete(String tableName,
+                          Query query) throws TransactionRetryException{
+        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        IgniteCache<String, Record> cache = caches.get(tableName);
+        try {
+            Class<?> recordClass = Class.forName(recordName);
+            // delete by key
+            Method keyMethod = recordClass.getMethod("getKey", Map.class);
+            String keyString = (String) keyMethod.invoke(null, query.equal);
+            try {
+                cache.remove(keyString);
+            } catch (CacheException e) {
+                if (currentTxn.isRollbackOnly()) {
+                    txRollback();
+                    throw new TransactionRetryException();
+                }
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Object aggregation(String tableName,
+                            Query query,
+                            Aggregation aggregation) {
+        IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
+        IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
+        List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+        if (aggregation.aggregationType.equals("SUM") && aggregation.dataType.equals("DECIMAL")) {
+            BigDecimal sum = BigDecimal.valueOf(0);
+            for (BinaryObject o : binaryRes) {
+                sum = sum.add(o.field(aggregation.column));
+            }
+            return sum;
+        }
+        if (aggregation.aggregationType.equals("COUNT")) {
+            return binaryRes.size();
+        }
+        return null;
+    }
 
     public void executeFinish() {
         for (String table : Constant.TABLES) {
