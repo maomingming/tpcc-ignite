@@ -4,6 +4,7 @@ import com.maomingming.tpcc.execute.Executor;
 import com.maomingming.tpcc.execute.KeyValueExecutor;
 import com.maomingming.tpcc.execute.SQLExecutor;
 import com.maomingming.tpcc.txn.NewOrderTxn;
+import com.maomingming.tpcc.txn.OrderStatusTxn;
 import com.maomingming.tpcc.txn.PaymentTxn;
 import com.maomingming.tpcc.txn.StockLevelTxn;
 import com.maomingming.tpcc.util.RandomGenerator;
@@ -47,7 +48,7 @@ public class Emulator extends Thread{
     }
 
     public void doNext() {
-        doPayment();
+        doOrderStatus();
     }
 
     public void doNewOrder() {
@@ -86,9 +87,9 @@ public class Emulator extends Thread{
         paymentTxn.printResult(this.printStream);
     }
 
-    public void doStockLevel() {
-//        StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
-//        int ret = this.executor.doStockLevel(stockLevelTxn);
+    public void doOrderStatus() {
+        OrderStatusTxn orderStatusTxn = new OrderStatusTxn(w_id);
+        int ret = worker.doOrderStatus(orderStatusTxn);
     }
 
 }

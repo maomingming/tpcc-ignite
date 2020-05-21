@@ -28,6 +28,7 @@ import javax.cache.processor.MutableEntry;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,27 +79,26 @@ public class KeyValueExecutor {
             Object keyString = keyMethod.invoke(null, query.equal);
             if (keyString != null)
                 return cache.get((String) keyString);
-            List<Record> res = find(tableName, query, projection);
+
+            IgniteCache<String, BinaryObject> binaryCache = cache.withKeepBinary();
+            IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
+            List<BinaryObject> binaryRes = binaryCache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+
             if (projection.sortBy != null) {
-                Field field = recordClass.getField(projection.sortBy);
-                res.sort((o1, o2) -> {
-                    try {
-                        if (projection.asc.equals("ASC"))
-                            return ((Comparable<Object>) field.get(o1)).compareTo(field.get(o2));
-                        else
-                            return ((Comparable<Object>) field.get(o2)).compareTo(field.get(o1));
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
+                binaryRes.sort((o1, o2) -> {
+                    if (projection.asc.equals("ASC"))
+                        return ((Comparable<Object>) o1.field(projection.sortBy)).compareTo(o2.field(projection.sortBy));
+                    else
+                        return ((Comparable<Object>) o2.field(projection.sortBy)).compareTo(o1.field(projection.sortBy));
                 });
             }
-            if (res.isEmpty())
+            if (binaryRes.isEmpty())
                 return null;
             int index=0;
             if (projection.loc.equals("MID"))
-                index = res.size()/2;
-            return res.get(index);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+                index = binaryRes.size()/2;
+            return binaryToRecord(binaryRes.get(index), projection);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
         return null;
@@ -114,13 +114,22 @@ public class KeyValueExecutor {
             Class<?> recordClass = Class.forName(recordName);
             Method keyMethod = recordClass.getMethod("getKey", Map.class);
             String keyString = (String) keyMethod.invoke(null, query.equal);
-            System.out.println(keyString);
             try {
                 cache.invoke(keyString, (CacheEntryProcessor<String, BinaryObject, Object>) (entry, objects) -> {
                     BinaryObjectBuilder builder = entry.getValue().toBuilder();
                     if (update.intIncrement != null) {
                         for (Map.Entry<String, Integer> e : update.intIncrement.entrySet()) {
                             builder.setField(e.getKey(), (int) builder.getField(e.getKey()) + e.getValue());
+                        }
+                    }
+                    if (update.decimalIncrement != null) {
+                        for (Map.Entry<String, BigDecimal> e : update.decimalIncrement.entrySet()) {
+                            builder.setField(e.getKey(), ((BigDecimal) builder.getField(e.getKey())).add(e.getValue()));
+                        }
+                    }
+                    if (update.replace != null) {
+                        for (Map.Entry<String, Object> e : update.replace.entrySet()) {
+                            builder.setField(e.getKey(), e.getValue());
                         }
                     }
                     entry.setValue(builder.build());
@@ -143,34 +152,36 @@ public class KeyValueExecutor {
         caches.get(tableName).put(r.getKey(), r);
     }
 
+    IgniteBiPredicate<String, BinaryObject> getPredicate(Query query) {
+        return (IgniteBiPredicate<String, BinaryObject>) (s, record) -> {
+            for (Map.Entry<String, Object> e : query.equal.entrySet()) {
+                if (!Objects.equals(record.field(e.getKey()), e.getValue()))
+                    return false;
+            }
+            return true;
+        };
+    }
+
+    static Record binaryToRecord(BinaryObject binaryObject, Projection projection) {
+        Record r = null;
+        try {
+            r = (Record) projection.recordClass.newInstance();
+            for (Map.Entry<String, Field> e : projection.colMap.entrySet()) {
+                e.getValue().set(r, binaryObject.field(e.getKey()));
+            }
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return r;
+    }
+
     public List<Record> find(String tableName,
                              Query query,
                              Projection projection) {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
-        try {
-            Class<?> recordClass = Class.forName(recordName);
-            IgniteBiPredicate<String, BinaryObject> filter = (IgniteBiPredicate<String, BinaryObject>) (s, record) -> {
-                for (Map.Entry<String, Object> e : query.equal.entrySet()) {
-                    if (!Objects.equals(record.field(e.getKey()), e.getValue()))
-                        return false;
-                }
-                return true;
-            };
-            List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
-            ArrayList<Record> res = new ArrayList<>();
-            for (BinaryObject binaryObject : binaryRes) {
-                Record r = (Record) recordClass.newInstance();
-                for (String col : projection.selectColumn) {
-                    Field field = recordClass.getField(col);
-                    field.set(r, binaryObject.field(col));
-                }
-                res.add(r);
-            }
-            return res;
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
+        IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
+        List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+        return binaryRes.stream().map(o -> binaryToRecord(o, projection)).collect(Collectors.toList());
     }
 //
 //    @SuppressWarnings("unchecked")

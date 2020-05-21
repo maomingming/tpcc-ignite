@@ -31,12 +31,12 @@ public class Worker {
         executor.txStart();
         Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE",
                 new Query(ImmutableMap.<String, Object>builder().put("w_id", w_id).build()),
-                new Projection(Arrays.asList("w_tax")));
+                new Projection("Warehouse", Arrays.asList("w_tax")));
         newOrderTxn.w_tax = warehouse.w_tax;
 
         Query districtQuery = new Query(ImmutableMap.<String, Object>builder().put("d_w_id", w_id).put("d_id", newOrderTxn.d_id).build());
         District district = (District) executor.findOne("DISTRICT",
-                districtQuery, new Projection(Arrays.asList("d_tax", "d_next_o_id")));
+                districtQuery, new Projection("District", Arrays.asList("d_tax", "d_next_o_id")));
         newOrderTxn.d_tax = district.d_tax;
         newOrderTxn.o_id = district.d_next_o_id;
         executor.update("DISTRICT", districtQuery,
@@ -44,7 +44,7 @@ public class Worker {
 
         Customer customer = (Customer) executor.findOne("CUSTOMER",
                 new Query(ImmutableMap.<String, Object>builder().put("c_w_id", w_id).put("c_d_id", newOrderTxn.d_id).put("c_id", newOrderTxn.c_id).build()),
-                new Projection(Arrays.asList("c_discount", "c_last", "c_credit")));
+                new Projection("Customer", Arrays.asList("c_discount", "c_last", "c_credit")));
         newOrderTxn.c_discount = customer.c_discount;
         newOrderTxn.c_last = customer.c_last;
         newOrderTxn.c_credit = customer.c_credit;
@@ -72,7 +72,7 @@ public class Worker {
 
             Item item = (Item) executor.findOne("ITEM",
                     new Query(ImmutableMap.of("i_id", input.ol_i_id)),
-                    new Projection(Arrays.asList("i_price", "i_name", "i_data")));
+                    new Projection("Item", Arrays.asList("i_price", "i_name", "i_data")));
             if (item == null) {
                 executor.txRollback();
                 return -1;
@@ -83,7 +83,7 @@ public class Worker {
             String dist = "s_dist_" + String.format("%02d", newOrderTxn.d_id);
             Query stockQuery = new Query(ImmutableMap.of("s_w_id", input.ol_supply_w_id, "s_i_id", input.ol_i_id));
             Stock stock = (Stock) executor.findOne("STOCK",
-                    stockQuery, new Projection(Arrays.asList("s_quantity", dist, "s_data")));
+                    stockQuery, new Projection("Stock", Arrays.asList("s_quantity", dist, "s_data")));
             output.s_quantity = stock.s_quantity;
             String s_dist = null;
             try {
@@ -127,7 +127,7 @@ public class Worker {
         executor.txStart();
         Query wareQuery = new Query(ImmutableMap.of("w_id", w_id));
         Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE", wareQuery,
-                new Projection(Arrays.asList("w_name", "w_street_1", "w_street_2", "w_city", "w_state", "w_zip")));
+                new Projection("Warehouse", Arrays.asList("w_name", "w_street_1", "w_street_2", "w_city", "w_state", "w_zip")));
         String w_name = warehouse.w_name;
         paymentTxn.w_street_1 = warehouse.w_street_1;
         paymentTxn.w_street_2 = warehouse.w_street_2;
@@ -139,7 +139,7 @@ public class Worker {
 
         Query distQuery = new Query(ImmutableMap.of("d_w_id", w_id, "d_id", paymentTxn.d_id));
         District district = (District) executor.findOne("DISTRICT", distQuery,
-                new Projection(Arrays.asList("d_name", "d_street_1", "d_street_2", "d_city", "d_state", "d_zip")));
+                new Projection("District", Arrays.asList("d_name", "d_street_1", "d_street_2", "d_city", "d_state", "d_zip")));
         String d_name = district.d_name;
         paymentTxn.d_street_1 = district.d_street_1;
         paymentTxn.d_street_2 = district.d_street_2;
@@ -153,25 +153,22 @@ public class Worker {
         if (paymentTxn.c_id > 0) {
             customer = (Customer) executor.findOne("CUSTOMER",
                     new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id, "c_id", paymentTxn.c_id)),
-                    new Projection(Arrays.asList("c_last", "c_balance", "c_ytd_payment", "c_payment_cnt", "c_credit", "c_data",
+                    new Projection("Customer", Arrays.asList("c_last", "c_credit", "c_data",
                             "c_first", "c_middle", "c_street_1", "c_street_2", "c_city", "c_state", "c_zip",
-                            "c_phone", "c_since", "c_credit_lim", "c_discount")));
+                            "c_phone", "c_since", "c_credit_lim", "c_discount", "c_balance")));
             paymentTxn.c_last = customer.c_last;
         } else {
             customer = (Customer) executor.findOne("CUSTOMER",
                     new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id, "c_last", paymentTxn.c_last)),
-                    new Projection(Arrays.asList("c_id", "c_balance", "c_ytd_payment", "c_payment_cnt", "c_credit", "c_data",
+                    new Projection("Customer", Arrays.asList("c_id", "c_credit", "c_data",
                             "c_first", "c_middle", "c_street_1", "c_street_2", "c_city", "c_state", "c_zip",
-                            "c_phone", "c_since", "c_credit_lim", "c_discount"), "c_first", "ASC", "MID"));
+                            "c_phone", "c_since", "c_credit_lim", "c_discount", "c_balance"), "c_first", "ASC", "MID"));
             if (customer == null){
                 executor.txRollback();
                 return -1;
             }
             paymentTxn.c_id = customer.c_id;
         }
-        customer.c_balance = customer.c_balance.subtract(paymentTxn.h_amount);
-        customer.c_ytd_payment = customer.c_ytd_payment.add(paymentTxn.h_amount);
-        customer.c_payment_cnt++;
         Map<String, Object> replace = null;
         if (customer.c_credit.equals("BC")) {
             String c_data = Customer.getKey(w_id, paymentTxn.d_id, paymentTxn.c_id) + "&" + District.getKey(w_id, paymentTxn.d_id)
@@ -207,29 +204,51 @@ public class Worker {
         executor.txCommit();
         return 0;
     }
-//
-//    public int doOrderStatus(OrderStatusTxn orderStatusTxn) {
-//        executor.txCommit();
-//        Customer customer;
-//        if (orderStatusTxn.c_id > 0) {
-//            customer = (Customer)executor.findOne("CUSTOMER",
-//                    Arrays.asList("c_last", "c_balance", "c_first", "c_middle"),
-//                    ImmutableMap.of("c_w_id", w_id, "c_d_id", orderStatusTxn.d_id, "c_id", orderStatusTxn.c_id));
-//            orderStatusTxn.c_last = customer.c_last;
-//        } else {
-//            List<Record> custRecords = executor.find("CUSTOMER",
-//                    Arrays.asList("c_balance", "c_first", "c_middle"),
-//                    ImmutableMap.of("c_w_id", w_id, "c_d_id", orderStatusTxn.d_id), null,
-//                    ImmutableMap.of("c_last", orderStatusTxn.c_last), "c_first");
-//            customer = (Customer) custRecords.get(custRecords.size()/2);
-//        }
-//        orderStatusTxn.c_balance = customer.c_balance;
-//        orderStatusTxn.c_first = customer.c_first;
-//        orderStatusTxn.c_middle = customer.c_middle;
-//
-//
-//        return 0;
-//    }
+
+    public int doOrderStatus(OrderStatusTxn orderStatusTxn) {
+        executor.txStart();
+        Customer customer;
+        if (orderStatusTxn.c_id > 0) {
+            customer = (Customer) executor.findOne("CUSTOMER",
+                    new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", orderStatusTxn.d_id, "c_id", orderStatusTxn.c_id)),
+                    new Projection("Customer", Arrays.asList("c_last", "c_balance", "c_first", "c_middle")));
+            orderStatusTxn.c_last = customer.c_last;
+        } else {
+            customer = (Customer) executor.findOne("CUSTOMER",
+                    new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", orderStatusTxn.d_id, "c_last", orderStatusTxn.c_last)),
+                    new Projection("Customer", Arrays.asList("c_id", "c_balance", "c_first", "c_middle"),
+                            "c_first", "ASC", "MID"));
+            if (customer == null){
+                executor.txRollback();
+                return -1;
+            }
+            orderStatusTxn.c_id = customer.c_id;
+        }
+
+        orderStatusTxn.c_balance = customer.c_balance;
+        orderStatusTxn.c_first = customer.c_first;
+        orderStatusTxn.c_middle = customer.c_middle;
+
+        Order order = (Order) executor.findOne("ORDER",
+                new Query(ImmutableMap.of("o_w_id", w_id, "o_d_id", orderStatusTxn.d_id, "o_c_id", orderStatusTxn.c_id)),
+                new Projection("Order", Arrays.asList("o_id", "o_entry_d", "o_carrier_id"), "o_id", "DESC", "FIRST"));
+        orderStatusTxn.o_id = order.o_id;
+        orderStatusTxn.o_entry_d = order.o_entry_d;
+        orderStatusTxn.o_carrier_id = order.o_carrier_id;
+
+        List<Record> orderLines = executor.find("ORDER_LINE",
+                new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", orderStatusTxn.d_id, "ol_o_id", orderStatusTxn.o_id)),
+                new Projection("OrderLine", Arrays.asList("ol_i_id", "ol_supply_w_id", "ol_quantity", "ol_amount", "ol_delivery_d")));
+        orderStatusTxn.outputRepeatingGroups = new OrderStatusTxn.OutputRepeatingGroup[orderLines.size()];
+        for (int i = 0; i < orderLines.size(); i++) {
+            OrderLine orderLine = (OrderLine) orderLines.get(i);
+            orderStatusTxn.outputRepeatingGroups[i] = new OrderStatusTxn.OutputRepeatingGroup(
+                    orderLine.ol_i_id, orderLine.ol_supply_w_id, orderLine.ol_quantity, orderLine.ol_amount, orderLine.ol_delivery_d
+            );
+        }
+        executor.txCommit();
+        return 0;
+    }
 
     public int doDelivery(DeliveryTxn deliveryTxn) {
         return 0;
