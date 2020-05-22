@@ -70,9 +70,24 @@ public class PaymentTxn {
 
     public void printResult(PrintStream printStream) {
         printStream.println("Payment");
-        printStream.println(h_date);
-        printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
-        printStream.printf("Customer: %d\tCust-Warehouse: %d\n", c_id, c_w_id);
-        printStream.printf("Amount Paid: %f", h_amount);
+        printStream.printf("Date: %s\n", h_date);
+        printStream.printf("%-41s%s\n", "Warehouse: " + w_id, "District: " + d_id);
+        printStream.printf("%-41s%s\n", w_street_1, d_street_1);
+        printStream.printf("%-41s%s\n", w_street_2, d_street_2);
+        printStream.printf("%-41s%s\n", w_city + " " + w_state + " " + w_zip, d_city + " " + d_state + " " + d_zip);
+        printStream.printf("Customer: %d\tCust-Warehouse: %d\tCust-District:%d\n", c_id, c_w_id, c_d_id);
+        printStream.printf("%-8s%s %s %s\n", "Name:", c_first, c_middle, c_last);
+        printStream.printf("%-8s%s\n", "", c_street_1);
+        printStream.printf("%-8s%s\n", "", c_street_2);
+        printStream.printf("%-8s%s\n", "", c_city + " " + c_state + " " + c_zip);
+        printStream.printf("Amount Paid: $%s\tNew Cust-Balance: $%s\n", h_amount, c_balance);
+        printStream.printf("Credit Limit: $%s\n", c_credit_lim);
+        if (c_credit != null && c_credit.equals("BC")) {
+            printStream.printf("%-11s%s\n", "Cust-Data:", c_data.substring(0, 50));
+            printStream.printf("%-11s%s\n", "", c_data.substring(50, 100));
+            printStream.printf("%-11s%s\n", "", c_data.substring(100, 150));
+            printStream.printf("%-11s%s\n", "", c_data.substring(150, 200));
+        }
+        printStream.println();
     }
 }

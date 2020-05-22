@@ -8,7 +8,7 @@ import org.apache.ignite.cache.query.SqlFieldsQuery;
 
 public class Coordinator {
 
-    static int w_cnt = 1;
+    static int w_cnt = 5;
     static String loaderType = "STREAM_LOADER";
     static String executorType = "KEY_VALUE_EXECUTOR";
 

@@ -42,7 +42,7 @@ public class NewOrderTxn {
     public Date o_entry_d;
     public BigDecimal totalAmount;
 
-    public class OutputRepeatingGroup {
+    public static class OutputRepeatingGroup {
         public String i_name;
         public int s_quantity;
         public char brand_generic;
@@ -71,13 +71,14 @@ public class NewOrderTxn {
         printStream.printf("Warehouse: %d\tDistrict: %d\tDate: %s\n", w_id, d_id, o_entry_d);
         printStream.printf("Customer: %d\tName: %s\tCredit: %s\tDiscount: %f\n", c_id, c_last, c_credit, c_discount);
         printStream.printf("Order Number: %d\tNumber of Lines: %d\tTax_W: %f\tTax_D: %f\n", o_id, o_ol_cnt, w_tax,d_tax);
-        printStream.print("Supp_W\tItem_Id\tItem_Name\tQuantity\tStock_Quantity\tbrand-generic\tPrice\tAmount\n");
+        printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", "Supp_W","Item_Id","Item Name","Qty","Stock","B/G","Price","Amount");
         for (int i = 0; i < o_ol_cnt; i++) {
             InputRepeatingGroup input = inputRepeatingGroups[i];
             OutputRepeatingGroup output = outputRepeatingGroups[i];
-            printStream.printf("%s\t%s\t%s\t%s\t%s\t%s\t%.2f\t%.2f\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
+            printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
                     input.ol_quantity, output.s_quantity, output.brand_generic, output.i_price, output.ol_amount);
         }
+        printStream.println();
     }
 
     public void printAfterRollback(PrintStream printStream) {
@@ -85,6 +86,7 @@ public class NewOrderTxn {
         printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
         printStream.printf("Customer: %d\tName: %s\tCredit: %s\n", c_id, c_last, c_credit);
         printStream.printf("Order Number: %d\n", o_id);
-        printStream.println("Item number is not valid");
+        printStream.println("Execution Status: Item number is not valid");
+        printStream.println();
     }
 }

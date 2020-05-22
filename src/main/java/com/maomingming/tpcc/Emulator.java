@@ -9,7 +9,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
-public class Emulator extends Thread{
+public class Emulator extends Thread {
     static int MAX_RETRY_TIMES = 10;
 
     int w_id;
@@ -19,9 +19,8 @@ public class Emulator extends Thread{
     Worker worker;
 
     public void run() {
-        for (int i = 0; i < 1000000; i ++) {
+        for (int i = 0; i < 1000000; i++) {
             doNext();
-            Counter.cnt.incrementAndGet();
             int waitTime = 100;
             try {
                 sleep(waitTime);
@@ -37,7 +36,7 @@ public class Emulator extends Thread{
         this.t_id = t_id;
         this.w_cnt = w_cnt;
         try {
-            this.printStream = new PrintStream("result/" + t_id +".log");
+            this.printStream = new PrintStream("result/" + w_id + "." + t_id + ".log");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -45,7 +44,17 @@ public class Emulator extends Thread{
     }
 
     public void doNext() {
-        doStockLevel();
+        int r = RandomGenerator.makeNumber(1, 23);
+        if (r <= 10)
+            doNewOrder();
+        else if (r <= 20)
+            doPayment();
+        else if (r == 21)
+            doOrderStatus();
+//        else if (r == 22)
+//            doDelivery();
+//        else
+//            doStockLevel();
     }
 
     public void doNewOrder() {
@@ -62,11 +71,12 @@ public class Emulator extends Thread{
         if (ret == null)
             return;
         long end = System.currentTimeMillis();
+        Counter.cnt.incrementAndGet();
         Counter.addResponseTime(end - begin);
-        if (ret != 0)
-            newOrderTxn.printAfterRollback(this.printStream);
-        else
-            newOrderTxn.printResult(this.printStream);
+//        if (ret != 0)
+//            newOrderTxn.printAfterRollback(this.printStream);
+//        else
+//            newOrderTxn.printResult(this.printStream);
     }
 
     public void doPayment() {
@@ -79,14 +89,15 @@ public class Emulator extends Thread{
 //                System.out.printf("retry times: %d\n", i);
             }
         }
-        if (ret == null)
-            return;
-        paymentTxn.printResult(this.printStream);
+//        if (ret != null && ret == 0)
+//            paymentTxn.printResult(this.printStream);
     }
 
     public void doOrderStatus() {
         OrderStatusTxn orderStatusTxn = new OrderStatusTxn(w_id);
         int ret = worker.doOrderStatus(orderStatusTxn);
+//        if (ret == 0)
+//            orderStatusTxn.printResult(printStream);
     }
 
     public void doDelivery() {
@@ -99,11 +110,15 @@ public class Emulator extends Thread{
 //                System.out.printf("retry times: %d\n", i);
             }
         }
+//        if (ret != null && ret == 0)
+//            deliveryTxn.printResult(printStream);
     }
 
     public void doStockLevel() {
         StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
         int ret = worker.doStockLevel(stockLevelTxn);
+//        if (ret == 0)
+//            stockLevelTxn.printResult(printStream);
     }
 
 }

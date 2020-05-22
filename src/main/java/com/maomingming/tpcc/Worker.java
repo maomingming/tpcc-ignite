@@ -85,7 +85,6 @@ public class Worker {
             Query stockQuery = new Query(ImmutableMap.of("s_w_id", input.ol_supply_w_id, "s_i_id", input.ol_i_id));
             Stock stock = (Stock) executor.findOne("STOCK",
                     stockQuery, new Projection("Stock", Arrays.asList("s_quantity", dist, "s_data")));
-            output.s_quantity = stock.s_quantity;
             String s_dist = null;
             try {
                 Field f = Stock.class.getField(dist);
@@ -93,16 +92,17 @@ public class Worker {
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-            ImmutableMap.Builder<String, Integer> m = ImmutableMap.builder();
             if (stock.s_quantity >= input.ol_quantity + 10)
-                m.put("s_quantity", -input.ol_quantity);
+                output.s_quantity = stock.s_quantity - input.ol_quantity;
             else
-                m.put("s_quantity", 91 - input.ol_quantity);
+                output.s_quantity = stock.s_quantity - input.ol_quantity + 91;
+            ImmutableMap.Builder<String, Integer> m = ImmutableMap.builder();
             m.put("s_ytd", input.ol_quantity);
             m.put("s_order_cnt", 1);
             if (input.ol_supply_w_id != w_id)
                 m.put("s_remote_cnt", 1);
-            executor.update("STOCK", stockQuery, new Update(m.build()));
+            executor.update("STOCK", stockQuery,
+                    new Update(m.build(), null, ImmutableMap.of("s_quantity", output.s_quantity)));
 
             output.ol_amount = item.i_price.multiply(new BigDecimal(input.ol_quantity));
 
@@ -172,11 +172,11 @@ public class Worker {
         }
         Map<String, Object> replace = null;
         if (customer.c_credit.equals("BC")) {
-            String c_data = Customer.getKey(w_id, paymentTxn.d_id, paymentTxn.c_id) + "&" + District.getKey(w_id, paymentTxn.d_id)
+            paymentTxn.c_data = Customer.getKey(w_id, paymentTxn.d_id, paymentTxn.c_id) + "&" + District.getKey(w_id, paymentTxn.d_id)
                     + "&H_AMOUNT" + paymentTxn.h_amount + customer.c_data;
-            if (c_data.length() > 500)
-                c_data = c_data.substring(0, 500);
-            replace = ImmutableMap.of("c_data", c_data);
+            if (paymentTxn.c_data.length() > 500)
+                paymentTxn.c_data = paymentTxn.c_data.substring(0, 500);
+            replace = ImmutableMap.of("c_data", paymentTxn.c_data);
         }
         executor.update("CUSTOMER",
                 new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", paymentTxn.d_id, "c_id", paymentTxn.c_id)),
@@ -195,7 +195,7 @@ public class Worker {
         paymentTxn.c_credit = customer.c_credit;
         paymentTxn.c_credit_lim = customer.c_credit_lim;
         paymentTxn.c_discount = customer.c_discount;
-        paymentTxn.c_balance = customer.c_balance;
+        paymentTxn.c_balance = customer.c_balance.subtract(paymentTxn.h_amount);
 
         paymentTxn.h_date = new Date();
         History history = new History(paymentTxn.c_id, paymentTxn.c_d_id, paymentTxn.c_w_id,
@@ -282,7 +282,7 @@ public class Worker {
     }
 
     public int doStockLevel(StockLevelTxn stockLevelTxn) {
-        executor.txStart();
+//        executor.txStart();
         District district = (District) executor.findOne("DISTRICT",
                 new Query(ImmutableMap.of("d_w_id", w_id, "d_id", stockLevelTxn.d_id)),
                 new Projection("District", Collections.singletonList("d_next_o_id")));
@@ -302,7 +302,7 @@ public class Worker {
                         ImmutableMap.of("s_i_id", i_ids),
                         ImmutableMap.of("s_quantity", stockLevelTxn.threshold)),
                 new Aggregation("COUNT"));
-        executor.txCommit();
+//        executor.txCommit();
         return 0;
     }
 
