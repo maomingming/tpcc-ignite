@@ -73,7 +73,8 @@ public class KeyValueExecutor implements Executor {
 
             IgniteCache<String, BinaryObject> binaryCache = cache.withKeepBinary();
             IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
-            List<BinaryObject> binaryRes = binaryCache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+            List<Cache.Entry<String, BinaryObject>> entryRes = binaryCache.query(new ScanQuery<>(filter)).getAll();
+            List<BinaryObject> binaryRes = entryRes.stream().map(Cache.Entry::getValue).collect(Collectors.toList());
 
             if (projection.sortBy != null) {
                 binaryRes.sort((o1, o2) -> {
@@ -193,7 +194,8 @@ public class KeyValueExecutor implements Executor {
                              Projection projection) {
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
         IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
-        List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+        List<Cache.Entry<String, BinaryObject>> entryRes = cache.query(new ScanQuery<>(filter)).getAll();
+        List<BinaryObject> binaryRes = entryRes.stream().map(Cache.Entry::getValue).collect(Collectors.toList());
         return binaryRes.stream().map(o -> binaryToRecord(o, projection)).collect(Collectors.toList());
     }
 
@@ -224,7 +226,8 @@ public class KeyValueExecutor implements Executor {
                               Aggregation aggregation) {
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
         IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
-        List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();
+        List<Cache.Entry<String, BinaryObject>> entryRes = cache.query(new ScanQuery<>(filter)).getAll();
+        List<BinaryObject> binaryRes = entryRes.stream().map(Cache.Entry::getValue).collect(Collectors.toList());
         if (aggregation.aggregationType.equals("SUM") && aggregation.dataType.equals("DECIMAL")) {
             BigDecimal sum = BigDecimal.valueOf(0);
             for (BinaryObject o : binaryRes) {
@@ -233,7 +236,7 @@ public class KeyValueExecutor implements Executor {
             return sum;
         }
         if (aggregation.aggregationType.equals("COUNT")) {
-            return binaryRes.size();
+            return (long) binaryRes.size();
         }
         return null;
     }

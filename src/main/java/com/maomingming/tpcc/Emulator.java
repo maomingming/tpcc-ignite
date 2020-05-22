@@ -5,7 +5,6 @@ import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.lang.Math.*;
 
 public class Emulator extends Thread {
     static int MAX_RETRY_TIMES = 10;
@@ -25,7 +24,6 @@ public class Emulator extends Thread {
 
     void think(int mean_time) {
         int time = (int)(-Math.log(RandomGenerator.makeDecimal(0, 99, 2).doubleValue())*mean_time);
-        System.out.println(time);
         key(time);
     }
 
