@@ -1,10 +1,13 @@
 package com.maomingming.tpcc.execute;
 
 import com.maomingming.tpcc.TransactionRetryException;
+import com.maomingming.tpcc.param.Aggregation;
+import com.maomingming.tpcc.param.Projection;
+import com.maomingming.tpcc.param.Query;
+import com.maomingming.tpcc.param.Update;
 import com.maomingming.tpcc.record.Record;
 
 import java.util.List;
-import java.util.Map;
 
 public interface Executor {
     void txStart();
@@ -14,18 +17,25 @@ public interface Executor {
     void txRollback();
 
     Record findOne(String tableName,
-                   List<String> selectColumn,
-                   Map<String, Object> key);
+                   Query query,
+                   Projection projection);
 
     List<Record> find(String tableName,
-                      List<String> selectColumn,
-                      Map<String, Object> key,
-                      Map<String, Object[]> keys,
-                      Map<String, Object> equalFilter,
-                      String sortBy);
+                      Query query,
+                      Projection projection);
 
-    void insert(String tableName, Record r) throws TransactionRetryException;
-    void update(String tableName, List<String> selectColumn, Record r) throws TransactionRetryException;
+    void insert(String tableName, Record r);
+
+    void update(String tableName,
+                Query query,
+                Update update) throws TransactionRetryException;
+
+    void delete(String tableName,
+                Query query) throws TransactionRetryException;
+
+    Object aggregation(String tableName,
+                       Query query,
+                       Aggregation aggregation);
 
     void executeFinish();
 }

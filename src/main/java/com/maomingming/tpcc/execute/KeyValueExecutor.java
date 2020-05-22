@@ -1,13 +1,8 @@
 package com.maomingming.tpcc.execute;
 
-import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.TransactionRetryException;
-import com.maomingming.tpcc.param.Aggregation;
-import com.maomingming.tpcc.param.Projection;
-import com.maomingming.tpcc.param.Query;
-import com.maomingming.tpcc.param.Update;
+import com.maomingming.tpcc.param.*;
 import com.maomingming.tpcc.record.*;
-import com.maomingming.tpcc.txn.*;
 import com.maomingming.tpcc.util.Constant;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
@@ -15,7 +10,6 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.cache.CacheEntryProcessor;
-import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiPredicate;
@@ -23,9 +17,6 @@ import org.apache.ignite.transactions.Transaction;
 
 import javax.cache.Cache;
 import javax.cache.CacheException;
-import javax.cache.processor.EntryProcessor;
-import javax.cache.processor.EntryProcessorException;
-import javax.cache.processor.MutableEntry;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,9 +24,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class KeyValueExecutor {
+public class KeyValueExecutor implements Executor {
     Ignite ignite;
     HashMap<String, IgniteCache<String, Record>> caches = new HashMap<>();
 
@@ -95,9 +85,9 @@ public class KeyValueExecutor {
             }
             if (binaryRes.isEmpty())
                 return null;
-            int index=0;
+            int index = 0;
             if (projection.loc.equals("MID"))
-                index = binaryRes.size()/2;
+                index = binaryRes.size() / 2;
             return binaryToRecord(binaryRes.get(index), projection);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
@@ -108,7 +98,7 @@ public class KeyValueExecutor {
 
     public void update(String tableName,
                        Query query,
-                       Update update) throws TransactionRetryException{
+                       Update update) throws TransactionRetryException {
         String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
         try {
@@ -171,13 +161,13 @@ public class KeyValueExecutor {
             }
             if (query.in != null) {
                 for (Map.Entry<String, Set<Integer>> e : query.in.entrySet()) {
-                    if (!e.getValue().contains((Integer)record.field(e.getKey())))
+                    if (!e.getValue().contains((Integer) record.field(e.getKey())))
                         return false;
                 }
             }
             if (query.lessThan != null) {
                 for (Map.Entry<String, Comparable<?>> e : query.lessThan.entrySet()) {
-                    if (e.getValue().compareTo(record.field(e.getKey()))<=0)
+                    if (e.getValue().compareTo(record.field(e.getKey())) <= 0)
                         return false;
                 }
             }
@@ -208,7 +198,7 @@ public class KeyValueExecutor {
     }
 
     public void delete(String tableName,
-                          Query query) throws TransactionRetryException{
+                       Query query) throws TransactionRetryException {
         String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
         IgniteCache<String, Record> cache = caches.get(tableName);
         try {
@@ -230,8 +220,8 @@ public class KeyValueExecutor {
     }
 
     public Object aggregation(String tableName,
-                            Query query,
-                            Aggregation aggregation) {
+                              Query query,
+                              Aggregation aggregation) {
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
         IgniteBiPredicate<String, BinaryObject> filter = getPredicate(query);
         List<BinaryObject> binaryRes = cache.query(new ScanQuery<>(filter), Cache.Entry::getValue).getAll();

@@ -1,15 +1,13 @@
 package com.maomingming.tpcc.execute;
 
 import com.maomingming.tpcc.TransactionRetryException;
+import com.maomingming.tpcc.param.*;
 import com.maomingming.tpcc.record.Record;
 import com.maomingming.tpcc.util.Constant;
 
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class SQLExecutor implements Executor {
@@ -46,108 +44,149 @@ public class SQLExecutor implements Executor {
     }
 
     public Record findOne(String tableName,
-                          List<String> selectColumn,
-                          Map<String, Object> key) {
-        List<Record> rs =  find(tableName, selectColumn, key, null, null, null);
-        if (rs == null || rs.size() == 0)
-            return null;
-        return rs.get(0);
-    }
-
-    public List<Record> find(String tableName,
-                             List<String> selectColumn,
-                             Map<String, Object> key,
-                             Map<String, Object[]> keys,
-                             Map<String, Object> equalFilter,
-                             String sortBy) {
+                          Query query,
+                          Projection projection) {
         StringBuilder sql = new StringBuilder("select ");
-        sql.append(String.join(", ", selectColumn)).append(" from \"").append(tableName).append("\" ");
-        Stream<String> whereStream = Stream.empty();
-        if (key != null) {
-            Stream<String> keyStream = key.keySet().stream().map(kk -> "(" + kk + " = ?)");
-            whereStream = Stream.concat(whereStream, keyStream);
+        sql.append(String.join(", ", projection.selectColumn)).append(" from \"").append(tableName).append("\" ");
+        sql.append(getWhereString(query));
+        if (projection.sortBy != null) {
+            sql.append(" order by ").append(projection.sortBy);
+            if (projection.asc.equals("DESC"))
+                sql.append(" desc ");
         }
-        if (keys != null) {
-            Stream<String> keysStream = keys.entrySet().stream().map(kse -> "(" + kse.getKey() + " in (" +
-                    String.join(", ", Collections.nCopies(kse.getValue().length, "?")) + ")");
-            whereStream = Stream.concat(whereStream, keysStream);
-        }
-        if (equalFilter != null) {
-            Stream<String> equalStream = equalFilter.keySet().stream().map(ek -> "(" + ek + " = ?)");
-            whereStream = Stream.concat(whereStream, equalStream);
-        }
-
-        String[] whereExpr = whereStream.toArray(String[]::new);
-        if (whereExpr.length > 0)
-            sql.append("where ").append(String.join(" and ", whereExpr));
-
-        if (sortBy != null)
-            sql.append("order by ").append(sortBy);
-
         try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            int index = 1;
-            if (key != null)
-                for (Object obj : key.values())
-                    stmt.setObject(index++, obj);
-            if (keys != null)
-                for (Object[] objects : keys.values())
-                    for (Object obj : objects)
-                        stmt.setObject(index++, obj);
-            if (equalFilter != null)
-                for (Object obj : equalFilter.values())
-                    stmt.setObject(index++, obj);
+            Integer index = 1;
+            prepareWhere(stmt, index, query);
             ResultSet rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            if (projection.loc.equals("FIRST"))
+                return rsToRecord(rs, projection);
             ArrayList<Record> res = new ArrayList<>();
-            String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
-            Class<?> recordClass = Class.forName(recordName);
+            res.add(rsToRecord(rs, projection));
             while (rs.next()) {
-                Record r = (Record) recordClass.newInstance();
-                for (String col : selectColumn) {
-                    Field field = recordClass.getField(col);
-                    field.set(r, rs.getObject(col));
-                }
-                res.add(r);
+                res.add(rsToRecord(rs, projection));
             }
-            return res;
-        } catch (SQLException | ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
+            return res.get(res.size() / 2);
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public void update(String tableName, List<String> selectColumn, Record r) throws TransactionRetryException {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
-        try {
-            Class<?> recordClass = Class.forName(recordName);
+    String getWhereString(Query query) {
+        Stream<String> whereStream = Stream.empty();
+        if (query.equal != null) {
+            Stream<String> equalStream = query.equal.keySet().stream().map(k -> k + " = ?");
+            whereStream = Stream.concat(whereStream, equalStream);
+        }
+        if (query.in != null) {
+            Stream<String> inStream = query.in.entrySet().stream().map(e -> e.getKey() + " in (" +
+                    String.join(", ", Collections.nCopies(e.getValue().size(), "?")) + ")");
+            whereStream = Stream.concat(whereStream, inStream);
+        }
+        if (query.lessThan != null) {
+            Stream<String> lessThanStream = query.lessThan.keySet().stream().map(k -> k + " < ?");
+            whereStream = Stream.concat(whereStream, lessThanStream);
+        }
 
-            StringBuilder sql = new StringBuilder("update \"" + tableName + "\" set ");
-            String[] setExpr = selectColumn.stream().map(x -> x + " = ?").toArray(String[]::new);
-            sql.append(String.join(", ", setExpr));
+        String[] whereExpr = whereStream.toArray(String[]::new);
+        return " where " + String.join(" and ", whereExpr);
+    }
 
-            sql.append(" where ");
-            Map<String, Object> keyMap = r.getKeyMap();
-            String[] whereExpr = keyMap.keySet().stream().map(x -> x + " = ?").toArray(String[]::new);
-            sql.append(String.join(" and ", whereExpr));
-            try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-                int index = 1;
-                for (String col : selectColumn) {
-                    Field field = recordClass.getField(col);
-                    stmt.setObject(index++, field.get(r));
-                }
-                for (Object obj : keyMap.values())
+    void prepareWhere(PreparedStatement stmt, Integer index, Query query) throws SQLException {
+        if (query.equal != null)
+            for (Object obj : query.equal.values())
+                stmt.setObject(index++, obj);
+        if (query.in != null)
+            for (Set<Integer> set : query.in.values())
+                for (Object obj : set)
                     stmt.setObject(index++, obj);
-                stmt.executeUpdate();
+        if (query.lessThan != null)
+            for (Object obj : query.lessThan.values())
+                stmt.setObject(index++, obj);
+    }
+
+    Record rsToRecord(ResultSet rs, Projection projection) {
+        Record r = null;
+        try {
+            r = (Record) projection.recordClass.newInstance();
+            for (Map.Entry<String, Field> e : projection.colMap.entrySet()) {
+                e.getValue().set(r, rs.getObject(e.getKey()));
             }
+        } catch (InstantiationException | IllegalAccessException | SQLException e) {
+            e.printStackTrace();
+        }
+        return r;
+    }
+
+
+    public List<Record> find(String tableName,
+                             Query query,
+                             Projection projection) {
+        String sql = "select " + String.join(", ", projection.selectColumn) + " from \"" + tableName + "\" " +
+                getWhereString(query);
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            Integer index = 1;
+            prepareWhere(stmt, index, query);
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<Record> res = new ArrayList<>();
+            while (rs.next()) {
+                res.add(rsToRecord(rs, projection));
+            }
+            return res;
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void update(String tableName,
+                       Query query,
+                       Update update) throws TransactionRetryException {
+        StringBuilder sql = new StringBuilder("update \"" + tableName + "\" set ");
+        Stream<String> setStream = Stream.empty();
+        if (update.intIncrement != null) {
+            Stream<String> incStream = update.intIncrement.keySet().stream().map(k -> k + " = " + k + " + ?");
+            setStream = Stream.concat(setStream, incStream);
+        }
+        if (update.decimalIncrement != null) {
+            Stream<String> incStream = update.decimalIncrement.keySet().stream().map(k -> k + " = " + k + " + ?");
+            setStream = Stream.concat(setStream, incStream);
+        }
+        if (update.replace != null) {
+            Stream<String> replaceStream = update.replace.keySet().stream().map(k -> k + " = ?");
+            setStream = Stream.concat(setStream, replaceStream);
+        }
+
+        String[] setExpr = setStream.toArray(String[]::new);
+        sql.append(String.join(", ", setExpr));
+
+        sql.append(getWhereString(query));
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            Integer index = 1;
+            if (update.intIncrement != null)
+                for (Object obj : update.intIncrement.values())
+                    stmt.setObject(index++, obj);
+            if (update.decimalIncrement != null)
+                for (Object obj : update.decimalIncrement.values())
+                    stmt.setObject(index++, obj);
+            if (update.replace != null)
+                for (Object obj : update.replace.values())
+                    stmt.setObject(index++, obj);
+            prepareWhere(stmt, index, query);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+//            System.out.println(e.getSQLState());
             if ("40001".equals(e.getSQLState())) {
                 // retry the transaction
                 txRollback();
+                e.printStackTrace();
                 throw new TransactionRetryException();
             } else {
                 e.printStackTrace();
             }
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            e.printStackTrace();
         }
     }
 
@@ -166,6 +205,50 @@ public class SQLExecutor implements Executor {
         } catch (ClassNotFoundException | SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    public void delete(String tableName,
+                       Query query) throws TransactionRetryException {
+        String sql = "delete from  \"" + tableName + "\" " + getWhereString(query);
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            Integer index = 1;
+            prepareWhere(stmt, index, query);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            if ("40001".equals(e.getSQLState())) {
+                // retry the transaction
+                txRollback();
+                throw new TransactionRetryException();
+            } else {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public Object aggregation(String tableName,
+                              Query query,
+                              Aggregation aggregation) {
+        StringBuilder sql = new StringBuilder("select ");
+        if (aggregation.aggregationType.equals("SUM") && aggregation.dataType.equals("DECIMAL")) {
+            sql.append("sum( ").append(aggregation.column).append(")");
+        }
+        if (aggregation.aggregationType.equals("COUNT")) {
+            sql.append("count(*)");
+        }
+        sql.append(" from \"").append(tableName).append("\" ");
+
+        sql.append(getWhereString(query));
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            Integer index = 1;
+            prepareWhere(stmt, index, query);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next())
+                return rs.getObject(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void executeFinish() {

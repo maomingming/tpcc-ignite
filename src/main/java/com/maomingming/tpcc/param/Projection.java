@@ -1,7 +1,5 @@
 package com.maomingming.tpcc.param;
 
-import com.maomingming.tpcc.util.Constant;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;

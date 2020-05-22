@@ -4,7 +4,6 @@ import com.maomingming.tpcc.load.Loader;
 import com.maomingming.tpcc.load.SQLLoader;
 import com.maomingming.tpcc.load.StreamLoader;
 import com.maomingming.tpcc.record.*;
-import com.maomingming.tpcc.record.Warehouse;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.ArrayList;

@@ -10,7 +10,6 @@ import com.maomingming.tpcc.param.Query;
 import com.maomingming.tpcc.param.Update;
 import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.txn.*;
-import org.h2.util.New;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -20,31 +19,30 @@ import java.util.stream.IntStream;
 
 public class Worker {
     int w_id;
-    KeyValueExecutor executor;
+    Executor executor;
 
     public Worker(String executorType, int w_id) throws Exception {
         this.w_id = w_id;
-        executor = new KeyValueExecutor();
-//        executor = getExecutor(executorType);
+        executor = getExecutor(executorType);
     }
 
     public int doNewOrder(NewOrderTxn newOrderTxn) throws TransactionRetryException {
         executor.txStart();
         Warehouse warehouse = (Warehouse) executor.findOne("WAREHOUSE",
-                new Query(ImmutableMap.<String, Object>builder().put("w_id", w_id).build()),
+                new Query(ImmutableMap.of("w_id", w_id)),
                 new Projection("Warehouse", Collections.singletonList("w_tax")));
         newOrderTxn.w_tax = warehouse.w_tax;
 
-        Query districtQuery = new Query(ImmutableMap.<String, Object>builder().put("d_w_id", w_id).put("d_id", newOrderTxn.d_id).build());
+        Query districtQuery = new Query(ImmutableMap.of("d_w_id", w_id,"d_id", newOrderTxn.d_id));
         District district = (District) executor.findOne("DISTRICT",
                 districtQuery, new Projection("District", Arrays.asList("d_tax", "d_next_o_id")));
         newOrderTxn.d_tax = district.d_tax;
         newOrderTxn.o_id = district.d_next_o_id;
         executor.update("DISTRICT", districtQuery,
-                new Update(ImmutableMap.<String, Integer>builder().put("d_next_o_id", 1).build()));
+                new Update(ImmutableMap.of("d_next_o_id", 1)));
 
         Customer customer = (Customer) executor.findOne("CUSTOMER",
-                new Query(ImmutableMap.<String, Object>builder().put("c_w_id", w_id).put("c_d_id", newOrderTxn.d_id).put("c_id", newOrderTxn.c_id).build()),
+                new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", newOrderTxn.d_id, "c_id", newOrderTxn.c_id)),
                 new Projection("Customer", Arrays.asList("c_discount", "c_last", "c_credit")));
         newOrderTxn.c_discount = customer.c_discount;
         newOrderTxn.c_last = customer.c_last;
@@ -85,6 +83,13 @@ public class Worker {
             Query stockQuery = new Query(ImmutableMap.of("s_w_id", input.ol_supply_w_id, "s_i_id", input.ol_i_id));
             Stock stock = (Stock) executor.findOne("STOCK",
                     stockQuery, new Projection("Stock", Arrays.asList("s_quantity", dist, "s_data")));
+            ImmutableMap.Builder<String, Integer> m = ImmutableMap.builder();
+            m.put("s_ytd", input.ol_quantity);
+            m.put("s_order_cnt", 1);
+            if (input.ol_supply_w_id != w_id)
+                m.put("s_remote_cnt", 1);
+            executor.update("STOCK", stockQuery,
+                    new Update(m.build(), null, ImmutableMap.of("s_quantity", output.s_quantity)));
             String s_dist = null;
             try {
                 Field f = Stock.class.getField(dist);
@@ -96,13 +101,6 @@ public class Worker {
                 output.s_quantity = stock.s_quantity - input.ol_quantity;
             else
                 output.s_quantity = stock.s_quantity - input.ol_quantity + 91;
-            ImmutableMap.Builder<String, Integer> m = ImmutableMap.builder();
-            m.put("s_ytd", input.ol_quantity);
-            m.put("s_order_cnt", 1);
-            if (input.ol_supply_w_id != w_id)
-                m.put("s_remote_cnt", 1);
-            executor.update("STOCK", stockQuery,
-                    new Update(m.build(), null, ImmutableMap.of("s_quantity", output.s_quantity)));
 
             output.ol_amount = item.i_price.multiply(new BigDecimal(input.ol_quantity));
 
@@ -297,7 +295,7 @@ public class Worker {
         for (Record orderLine : orderLines) {
             i_ids.add(((OrderLine) orderLine).ol_i_id);
         }
-        stockLevelTxn.low_stock = (int) executor.aggregation("STOCK",
+        stockLevelTxn.low_stock = (long) executor.aggregation("STOCK",
                 new Query(ImmutableMap.of("s_w_id", w_id),
                         ImmutableMap.of("s_i_id", i_ids),
                         ImmutableMap.of("s_quantity", stockLevelTxn.threshold)),
@@ -310,14 +308,14 @@ public class Worker {
         executor.executeFinish();
     }
 
-//    private Executor getExecutor(String executorType) throws Exception {
-//        switch (executorType) {
-//            case "KEY_VALUE_EXECUTOR":
-//                return new KeyValueExecutor();
-//            case "SQL_EXECUTOR":
-//                return new SQLExecutor();
-//            default:
-//                throw new IllegalStateException("Unexpected value: " + executorType);
-//        }
-//    }
+    private Executor getExecutor(String executorType) throws Exception {
+        switch (executorType) {
+            case "KEY_VALUE_EXECUTOR":
+                return new KeyValueExecutor();
+            case "SQL_EXECUTOR":
+                return new SQLExecutor();
+            default:
+                throw new IllegalStateException("Unexpected value: " + executorType);
+        }
+    }
 }

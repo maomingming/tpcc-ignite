@@ -5,11 +5,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Warehouse implements Record, Serializable {
     public int w_id;

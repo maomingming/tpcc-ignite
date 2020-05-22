@@ -3,9 +3,7 @@ package com.maomingming.tpcc.record;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 public class NewOrder implements Record, Serializable {
     public int no_o_id;

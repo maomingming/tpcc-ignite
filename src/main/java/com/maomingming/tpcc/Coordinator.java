@@ -1,14 +1,8 @@
 package com.maomingming.tpcc;
 
-import com.maomingming.tpcc.record.Customer;
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.Ignition;
-import org.apache.ignite.cache.query.SqlFieldsQuery;
-
 public class Coordinator {
 
-    static int w_cnt = 5;
+    static int w_cnt = 3;
     static String loaderType = "STREAM_LOADER";
     static String executorType = "KEY_VALUE_EXECUTOR";
 

@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 public class Stock implements Record, Serializable {
     public int s_i_id;

@@ -5,9 +5,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 public class District implements Record, Serializable {
     public int d_id;

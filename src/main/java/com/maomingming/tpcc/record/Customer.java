@@ -6,11 +6,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Customer implements Record, Serializable {
     public int c_id;

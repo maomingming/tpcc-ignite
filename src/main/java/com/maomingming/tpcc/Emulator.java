@@ -1,13 +1,11 @@
 package com.maomingming.tpcc;
 
-import com.maomingming.tpcc.execute.Executor;
-import com.maomingming.tpcc.execute.KeyValueExecutor;
-import com.maomingming.tpcc.execute.SQLExecutor;
 import com.maomingming.tpcc.txn.*;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.lang.Math.*;
 
 public class Emulator extends Thread {
     static int MAX_RETRY_TIMES = 10;
@@ -21,14 +19,22 @@ public class Emulator extends Thread {
     public void run() {
         for (int i = 0; i < 1000000; i++) {
             doNext();
-            int waitTime = 100;
-            try {
-                sleep(waitTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
         worker.finish();
+    }
+
+    void think(int mean_time) {
+        int time = (int)(-Math.log(RandomGenerator.makeDecimal(0, 99, 2).doubleValue())*mean_time);
+        System.out.println(time);
+        key(time);
+    }
+
+    void key(int time) {
+        try {
+            sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public Emulator(String executorType, int w_id, int t_id, int w_cnt) throws Exception {
@@ -51,14 +57,16 @@ public class Emulator extends Thread {
             doPayment();
         else if (r == 21)
             doOrderStatus();
-//        else if (r == 22)
-//            doDelivery();
-//        else
-//            doStockLevel();
+        else if (r == 22)
+            doDelivery();
+        else
+            doStockLevel();
     }
 
     public void doNewOrder() {
+        think(12000);
         NewOrderTxn newOrderTxn = new NewOrderTxn(w_id, w_cnt);
+        key(18000);
         long begin = System.currentTimeMillis();
         Integer ret = null;
         for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
@@ -73,52 +81,60 @@ public class Emulator extends Thread {
         long end = System.currentTimeMillis();
         Counter.cnt.incrementAndGet();
         Counter.addResponseTime(end - begin);
-//        if (ret != 0)
-//            newOrderTxn.printAfterRollback(this.printStream);
-//        else
-//            newOrderTxn.printResult(this.printStream);
+        if (ret != 0)
+            newOrderTxn.printAfterRollback(this.printStream);
+        else
+            newOrderTxn.printResult(this.printStream);
     }
 
     public void doPayment() {
+        think(12000);
         PaymentTxn paymentTxn = new PaymentTxn(w_id, w_cnt);
+        key(3000);
         Integer ret = null;
         for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
             try {
                 ret = worker.doPayment(paymentTxn);
             } catch (TransactionRetryException e) {
-//                System.out.printf("retry times: %d\n", i);
+                System.out.printf("retry times: %d\n", i);
             }
         }
-//        if (ret != null && ret == 0)
-//            paymentTxn.printResult(this.printStream);
+        if (ret != null && ret == 0)
+            paymentTxn.printResult(this.printStream);
     }
 
     public void doOrderStatus() {
+        think(10000);
         OrderStatusTxn orderStatusTxn = new OrderStatusTxn(w_id);
+        key(2000);
         int ret = worker.doOrderStatus(orderStatusTxn);
-//        if (ret == 0)
-//            orderStatusTxn.printResult(printStream);
+        if (ret == 0)
+            orderStatusTxn.printResult(printStream);
     }
 
     public void doDelivery() {
+        think(5000);
         DeliveryTxn deliveryTxn = new DeliveryTxn(w_id);
+        key(2000);
         Integer ret = null;
         for (int i = 0; i < MAX_RETRY_TIMES && ret == null; i++) {
             try {
                 ret = worker.doDelivery(deliveryTxn);
             } catch (TransactionRetryException e) {
-//                System.out.printf("retry times: %d\n", i);
+                System.out.printf("retry times: %d\n", i);
             }
         }
-//        if (ret != null && ret == 0)
-//            deliveryTxn.printResult(printStream);
+        if (ret != null && ret == 0)
+            deliveryTxn.printResult(printStream);
     }
 
     public void doStockLevel() {
+        think(5000);
         StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
+        key(2000);
         int ret = worker.doStockLevel(stockLevelTxn);
-//        if (ret == 0)
-//            stockLevelTxn.printResult(printStream);
+        if (ret == 0)
+            stockLevelTxn.printResult(printStream);
     }
 
 }

@@ -1,6 +1,5 @@
 package com.maomingming.tpcc.load;
 
-import com.maomingming.tpcc.record.Customer;
 import com.maomingming.tpcc.record.Record;
 import com.maomingming.tpcc.util.Constant;
 
