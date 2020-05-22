@@ -1,4 +1,4 @@
-package com.maomingming.tpcc.execute;
+package com.maomingming.tpcc.driver;
 
 import com.maomingming.tpcc.TransactionRetryException;
 import com.maomingming.tpcc.param.*;
@@ -6,6 +6,7 @@ import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.util.Constant;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
@@ -25,13 +26,35 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class KeyValueExecutor implements Executor {
+public class KeyValueDriver implements Driver {
     Ignite ignite;
     HashMap<String, IgniteCache<String, Record>> caches = new HashMap<>();
+    HashMap<String, IgniteDataStreamer<String, Record>> stmrs = new HashMap<>();
+
+    public void loadStart() {
+        Ignition.setClientMode(true);
+        this.ignite = Ignition.start("config/snapshot.xml");
+        for (String table : Constant.TABLES) {
+            caches.put(table, this.ignite.getOrCreateCache(table));
+            stmrs.put(table, this.ignite.dataStreamer(table));
+        }
+    }
+
+    public void load(String tableName, Record r) {
+        this.stmrs.get(tableName).addData(r.getKey(), r);
+    }
+
+    public void loadFinish() {
+        for (String table : Constant.TABLES) {
+            this.stmrs.get(table).close();
+            this.caches.get(table).close();
+        }
+        this.ignite.close();
+    }
 
     Transaction currentTxn;
 
-    public KeyValueExecutor() {
+    public void runtimeStart() {
         Ignition.setClientMode(true);
         IgniteConfiguration conf = new IgniteConfiguration();
         conf.setIgniteInstanceName("CLIENT");
@@ -241,7 +264,7 @@ public class KeyValueExecutor implements Executor {
         return null;
     }
 
-    public void executeFinish() {
+    public void runtimeFinish() {
         for (String table : Constant.TABLES) {
             this.caches.get(table).close();
         }

@@ -1,4 +1,4 @@
-package com.maomingming.tpcc.execute;
+package com.maomingming.tpcc.driver;
 
 import com.maomingming.tpcc.TransactionRetryException;
 import com.maomingming.tpcc.param.Aggregation;
@@ -9,7 +9,15 @@ import com.maomingming.tpcc.record.Record;
 
 import java.util.List;
 
-public interface Executor {
+public interface Driver {
+
+    void loadStart() throws Exception;
+    void load(String tableName, Record r);
+    void loadFinish();
+
+    void runtimeStart() throws Exception;
+    void runtimeFinish();
+
     void txStart();
 
     void txCommit();
@@ -37,5 +45,4 @@ public interface Executor {
                        Query query,
                        Aggregation aggregation);
 
-    void executeFinish();
 }
