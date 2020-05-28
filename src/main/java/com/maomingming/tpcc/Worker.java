@@ -76,7 +76,8 @@ public class Worker {
                     new Projection("Item", Arrays.asList("i_price", "i_name", "i_data")));
             if (item == null) {
                 driver.txRollback();
-                return -1;
+                newOrderTxn.isRollback=true;
+                return 0;
             }
             output.i_price = item.i_price;
             output.i_name = item.i_name;
@@ -232,17 +233,16 @@ public class Worker {
 
         Order order = (Order) driver.findOne("ORDER",
                 new Query(ImmutableMap.of("o_w_id", w_id, "o_d_id", orderStatusTxn.d_id, "o_c_id", orderStatusTxn.c_id)),
-                new Projection("Order", Arrays.asList("o_id", "o_entry_d", "o_carrier_id"), "o_id", "DESC", "FIRST"));
+                new Projection("Order", Arrays.asList("o_id", "o_entry_d", "o_carrier_id", "o_ol_cnt"), "o_id", "DESC", "FIRST"));
         orderStatusTxn.o_id = order.o_id;
         orderStatusTxn.o_entry_d = order.o_entry_d;
         orderStatusTxn.o_carrier_id = order.o_carrier_id;
 
-        List<Record> orderLines = driver.find("ORDER_LINE",
-                new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", orderStatusTxn.d_id, "ol_o_id", orderStatusTxn.o_id)),
-                new Projection("OrderLine", Arrays.asList("ol_i_id", "ol_supply_w_id", "ol_quantity", "ol_amount", "ol_delivery_d")));
-        orderStatusTxn.outputRepeatingGroups = new OrderStatusTxn.OutputRepeatingGroup[orderLines.size()];
-        for (int i = 0; i < orderLines.size(); i++) {
-            OrderLine orderLine = (OrderLine) orderLines.get(i);
+        orderStatusTxn.outputRepeatingGroups = new OrderStatusTxn.OutputRepeatingGroup[order.o_ol_cnt];
+        for (int i = 1; i <= order.o_ol_cnt; i++) {
+            OrderLine orderLine = (OrderLine) driver.find("ORDER_LINE",
+                    new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", orderStatusTxn.d_id, "ol_o_id", orderStatusTxn.o_id, "ol_number", i)),
+                    new Projection("OrderLine", Arrays.asList("ol_i_id", "ol_supply_w_id", "ol_quantity", "ol_amount", "ol_delivery_d")));
             orderStatusTxn.outputRepeatingGroups[i] = new OrderStatusTxn.OutputRepeatingGroup(
                     orderLine.ol_i_id, orderLine.ol_supply_w_id, orderLine.ol_quantity, orderLine.ol_amount, orderLine.ol_delivery_d
             );
@@ -252,7 +252,7 @@ public class Worker {
     }
 
     public int doDelivery(DeliveryTxn deliveryTxn) throws TransactionRetryException {
-        for (int d_id = 1; d_id <= 10; ++d_id) {
+        for (int d_id = deliveryTxn.start_d; d_id <= 10; ++d_id) {
             driver.txStart();
             NewOrder newOrder = (NewOrder) driver.findOne("NEW_ORDER",
                     new Query(ImmutableMap.of("no_w_id", w_id, "no_d_id", d_id)),
@@ -277,6 +277,7 @@ public class Worker {
                     new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", d_id, "c_id", c_id)),
                     new Update(ImmutableMap.of("c_delivery_cnt", 1), ImmutableMap.of("c_balance", amount)));
             driver.txCommit();
+            deliveryTxn.start_d++;
         }
         return 0;
     }
@@ -304,6 +305,10 @@ public class Worker {
                 new Aggregation("COUNT"));
 //        driver.txCommit();
         return 0;
+    }
+
+    public void rollback() {
+        driver.txRollback();
     }
 
     public void finish() {

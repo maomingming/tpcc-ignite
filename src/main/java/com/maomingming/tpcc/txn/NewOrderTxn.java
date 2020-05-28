@@ -6,7 +6,7 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class NewOrderTxn {
+public class NewOrderTxn implements Txn {
     public int w_id;
 
     public int d_id;
@@ -66,27 +66,27 @@ public class NewOrderTxn {
         }
     }
 
+    public boolean isRollback=false;
+
     public void printResult(PrintStream printStream) {
         printStream.println("NEW ORDER");
-        printStream.printf("Warehouse: %d\tDistrict: %d\tDate: %s\n", w_id, d_id, o_entry_d);
-        printStream.printf("Customer: %d\tName: %s\tCredit: %s\tDiscount: %f\n", c_id, c_last, c_credit, c_discount);
-        printStream.printf("Order Number: %d\tNumber of Lines: %d\tTax_W: %f\tTax_D: %f\n", o_id, o_ol_cnt, w_tax,d_tax);
-        printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", "Supp_W","Item_Id","Item Name","Qty","Stock","B/G","Price","Amount");
-        for (int i = 0; i < o_ol_cnt; i++) {
-            InputRepeatingGroup input = inputRepeatingGroups[i];
-            OutputRepeatingGroup output = outputRepeatingGroups[i];
-            printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
-                    input.ol_quantity, output.s_quantity, output.brand_generic, output.i_price, output.ol_amount);
+        if (isRollback) {
+            printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
+            printStream.printf("Customer: %d\tName: %s\tCredit: %s\n", c_id, c_last, c_credit);
+            printStream.printf("Order Number: %d\n", o_id);
+            printStream.println("Execution Status: Item number is not valid");
+        } else {
+            printStream.printf("Warehouse: %d\tDistrict: %d\tDate: %s\n", w_id, d_id, o_entry_d);
+            printStream.printf("Customer: %d\tName: %s\tCredit: %s\tDiscount: %f\n", c_id, c_last, c_credit, c_discount);
+            printStream.printf("Order Number: %d\tNumber of Lines: %d\tTax_W: %f\tTax_D: %f\n", o_id, o_ol_cnt, w_tax,d_tax);
+            printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", "Supp_W","Item_Id","Item Name","Qty","Stock","B/G","Price","Amount");
+            for (int i = 0; i < o_ol_cnt; i++) {
+                InputRepeatingGroup input = inputRepeatingGroups[i];
+                OutputRepeatingGroup output = outputRepeatingGroups[i];
+                printStream.printf("  %-7s%-10s%-25s%-6s%-7s%-5s%-9s%s\n", input.ol_supply_w_id, input.ol_i_id, output.i_name,
+                        input.ol_quantity, output.s_quantity, output.brand_generic, output.i_price, output.ol_amount);
+            }
         }
-        printStream.println();
-    }
-
-    public void printAfterRollback(PrintStream printStream) {
-        printStream.println("New Order");
-        printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
-        printStream.printf("Customer: %d\tName: %s\tCredit: %s\n", c_id, c_last, c_credit);
-        printStream.printf("Order Number: %d\n", o_id);
-        printStream.println("Execution Status: Item number is not valid");
         printStream.println();
     }
 }

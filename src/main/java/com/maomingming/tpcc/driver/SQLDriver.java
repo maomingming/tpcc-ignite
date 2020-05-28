@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class SQLDriver implements Driver {
 
     Connection conn;
-    String warehouse = "CREATE TABLE WAREHOUSE (" +
+    static String warehouse = "CREATE TABLE WAREHOUSE (" +
             "W_ID SMALLINT NOT NULL," +
             "W_NAME VARCHAR(10)," +
             "W_STREET_1 VARCHAR(20)," +
@@ -26,7 +26,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY (W_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String district = "CREATE TABLE DISTRICT (" +
+    static String district = "CREATE TABLE DISTRICT (" +
             "D_ID TINYINT NOT NULL," +
             "D_W_ID SMALLINT NOT NULL," +
             "D_NAME VARCHAR(10)," +
@@ -41,7 +41,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY (D_W_ID, D_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String customer = "CREATE TABLE CUSTOMER (" +
+    static String customer = "CREATE TABLE CUSTOMER (" +
             "C_ID INT NOT NULL," +
             "C_D_ID TINYINT NOT NULL," +
             "C_W_ID SMALLINT NOT NULL," +
@@ -66,7 +66,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(C_W_ID, C_D_ID, C_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String history = "CREATE TABLE HISTORY (" +
+    static String history = "CREATE TABLE HISTORY (" +
             "H_ID INT," +
             "H_C_ID INT," +
             "H_C_D_ID TINYINT," +
@@ -79,7 +79,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(H_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String newOrder = "CREATE TABLE NEW_ORDER (" +
+    static String newOrder = "CREATE TABLE NEW_ORDER (" +
             "NO_O_ID INT NOT NULL," +
             "NO_D_ID TINYINT NOT NULL," +
             "NO_W_ID SMALLINT NOT NULL," +
@@ -87,7 +87,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(NO_W_ID, NO_D_ID, NO_O_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String order = "CREATE TABLE \"ORDER\" (" +
+    static String order = "CREATE TABLE \"ORDER\" (" +
             "O_ID INT NOT NULL," +
             "O_D_ID TINYINT NOT NULL," +
             "O_W_ID SMALLINT NOT NULL," +
@@ -99,7 +99,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(O_W_ID, O_D_ID, O_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String orderLine = "CREATE TABLE ORDER_LINE (" +
+    static String orderLine = "CREATE TABLE ORDER_LINE (" +
             "OL_O_ID INT NOT NULL," +
             "OL_D_ID TINYINT NOT NULL," +
             "OL_W_ID SMALLINT NOT NULL," +
@@ -113,7 +113,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String item = "CREATE TABLE ITEM (" +
+    static String item = "CREATE TABLE ITEM (" +
             "I_ID INT NOT NULL," +
             "I_IM_ID INT," +
             "I_NAME VARCHAR(24)," +
@@ -122,7 +122,7 @@ public class SQLDriver implements Driver {
             "PRIMARY KEY(I_ID)" +
             ") WITH \"ATOMICITY=TRANSACTIONAL_SNAPSHOT\"";
 
-    String stock = "CREATE TABLE STOCK (" +
+    static String stock = "CREATE TABLE STOCK (" +
             "S_I_ID INT NOT NULL," +
             "S_W_ID SMALLINT NOT NULL," +
             "S_QUANTITY SMALLINT," +
@@ -146,6 +146,11 @@ public class SQLDriver implements Driver {
     public void loadStart() throws Exception{
         Class.forName("org.apache.ignite.IgniteJdbcThinDriver");
         conn = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1");
+    }
+
+    public static void createSchema() throws Exception {
+        Class.forName("org.apache.ignite.IgniteJdbcThinDriver");
+        Connection conn = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1");
 
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(warehouse);
@@ -158,6 +163,7 @@ public class SQLDriver implements Driver {
             stmt.executeUpdate(item);
             stmt.executeUpdate(stock);
         }
+        conn.close();
     }
 
     public void load(String tableName, Record r) {
@@ -348,9 +354,8 @@ public class SQLDriver implements Driver {
     }
 
     public void insert(String tableName, Record r) {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        Class<?> recordClass = Constant.tableToRecord.get(tableName);
         try {
-            Class<?> recordClass = Class.forName(recordName);
             Field[] fields = recordClass.getFields();
             String sql = "INSERT INTO \"" + tableName + "\" VALUES (" + String.join(", ", Collections.nCopies(fields.length, "?")) + ")";
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -359,7 +364,7 @@ public class SQLDriver implements Driver {
                 }
                 stmt.executeUpdate();
             }
-        } catch (ClassNotFoundException | SQLException | IllegalAccessException e) {
+        } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
     }

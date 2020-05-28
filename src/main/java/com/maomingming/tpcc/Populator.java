@@ -8,23 +8,28 @@ import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class Populator {
+public class Populator extends Thread {
 
     Driver driver;
-    int w_cnt;
+    List<Integer> w_ids;
+    boolean loadItem;
 
-    public Populator(String driverType, int w_cnt) throws Exception {
+    public Populator(String driverType, List<Integer> w_ids, boolean loadItem) throws Exception {
         driver = DriverFactory.getDriver(driverType);
         driver.loadStart();
-        this.w_cnt = w_cnt;
+        this.w_ids = w_ids;
+        this.loadItem = loadItem;
     }
 
-    public void loadAll() {
-        for (int i_id = 1; i_id <= 100000; i_id++) {
-            driver.load("ITEM", new Item(i_id));
-        }
-        for (int w_id = 1; w_id <= this.w_cnt; w_id++) {
+    public void run() {
+        if (loadItem)
+            for (int i_id = 1; i_id <= 100000; i_id++) {
+                driver.load("ITEM", new Item(i_id));
+            }
+        for (int w_id : w_ids) {
+            System.out.println(w_id);
             driver.load("WAREHOUSE", new Warehouse(w_id));
             for (int s_i_id = 1; s_i_id <= 100000; s_i_id++) {
                 driver.load("STOCK", new Stock(s_i_id, w_id));

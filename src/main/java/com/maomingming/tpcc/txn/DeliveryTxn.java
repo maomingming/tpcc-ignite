@@ -4,9 +4,11 @@ import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.PrintStream;
 
-public class DeliveryTxn {
+public class DeliveryTxn implements Txn {
     public int w_id;
     public int o_carrier_id;
+
+    public int start_d = 1;
 
     public DeliveryTxn(int w_id) {
         this.w_id = w_id;

@@ -4,7 +4,7 @@ import com.maomingming.tpcc.util.RandomGenerator;
 
 import java.io.PrintStream;
 
-public class StockLevelTxn {
+public class StockLevelTxn implements Txn{
     public int w_id;
     public int d_id;
     public int threshold;

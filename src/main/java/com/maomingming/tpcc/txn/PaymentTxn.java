@@ -6,7 +6,7 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class PaymentTxn {
+public class PaymentTxn implements Txn{
     public int w_id;
 
     public int d_id;

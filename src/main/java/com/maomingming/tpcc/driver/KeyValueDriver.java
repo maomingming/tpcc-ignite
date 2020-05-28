@@ -4,15 +4,13 @@ import com.maomingming.tpcc.TransactionRetryException;
 import com.maomingming.tpcc.param.*;
 import com.maomingming.tpcc.record.*;
 import com.maomingming.tpcc.util.Constant;
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteDataStreamer;
-import org.apache.ignite.Ignition;
+import org.apache.ignite.*;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.cache.CacheEntryProcessor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.transactions.Transaction;
 
@@ -75,19 +73,22 @@ public class KeyValueDriver implements Driver {
     }
 
     public void txRollback() {
-        currentTxn.rollback();
-        currentTxn.close();
+        try {
+            currentTxn.rollback();
+            currentTxn.close();
+        } catch (IgniteException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @SuppressWarnings("unchecked")
     public Record findOne(String tableName,
                           Query query,
                           Projection projection) {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        Class<?> recordClass = Constant.tableToRecord.get(tableName);
         IgniteCache<String, Record> cache = caches.get(tableName);
         try {
-            Class<?> recordClass = Class.forName(recordName);
-
             // try to get by key
             Method keyMethod = recordClass.getMethod("getKey", Map.class);
             Object keyString = keyMethod.invoke(null, query.equal);
@@ -113,7 +114,7 @@ public class KeyValueDriver implements Driver {
             if (projection.loc.equals("MID"))
                 index = binaryRes.size() / 2;
             return binaryToRecord(binaryRes.get(index), projection);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
         return null;
@@ -123,10 +124,9 @@ public class KeyValueDriver implements Driver {
     public void update(String tableName,
                        Query query,
                        Update update) throws TransactionRetryException {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        Class<?> recordClass = Constant.tableToRecord.get(tableName);
         IgniteCache<String, BinaryObject> cache = caches.get(tableName).withKeepBinary();
         try {
-            Class<?> recordClass = Class.forName(recordName);
             Method keyMethod = recordClass.getMethod("getKey", Map.class);
             String keyString = (String) keyMethod.invoke(null, query.equal);
             List<String> keyList;
@@ -166,7 +166,7 @@ public class KeyValueDriver implements Driver {
                     }
                 }
             }
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
 
@@ -224,10 +224,9 @@ public class KeyValueDriver implements Driver {
 
     public void delete(String tableName,
                        Query query) throws TransactionRetryException {
-        String recordName = "com.maomingming.tpcc.record." + Constant.tableToRecord.get(tableName);
+        Class<?> recordClass = Constant.tableToRecord.get(tableName);
         IgniteCache<String, Record> cache = caches.get(tableName);
         try {
-            Class<?> recordClass = Class.forName(recordName);
             // delete by key
             Method keyMethod = recordClass.getMethod("getKey", Map.class);
             String keyString = (String) keyMethod.invoke(null, query.equal);
@@ -239,7 +238,7 @@ public class KeyValueDriver implements Driver {
                     throw new TransactionRetryException();
                 }
             }
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
     }

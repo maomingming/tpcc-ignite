@@ -45,6 +45,9 @@
                             <list>
                                 <!-- In distributed environment, replace with actual host IP address. -->
                                 <value>127.0.0.1:47500..47509</value>
+                                <value>172.17.0.12</value>
+                                <value>172.17.0.9</value>
+                                <value>172.17.0.6</value>
                             </list>
                         </property>
                     </bean>
