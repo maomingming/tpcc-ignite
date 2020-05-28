@@ -132,6 +132,7 @@ public class Emulator extends Thread {
             if (ret==0) txn.printResult(printStream);
             return times;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
             futureTask.cancel(true);
             worker.rollback();
             if (times<MAX_RETRY_TIMES)

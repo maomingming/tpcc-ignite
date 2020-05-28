@@ -49,15 +49,15 @@ public class OrderStatusTxn implements Txn {
     }
 
     public void printResult(PrintStream printStream) {
-        printStream.println("ORDER-STATUS");
+        printStream.println("Order-Status");
         printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
         printStream.printf("Customer: %d\tName: %s %s %s\n", c_id, c_first, c_middle, c_last);
         printStream.printf("Cust-Balance: $%s\n",c_balance);
         printStream.printf("Order Number: %d\tEntry Date: %s\n", o_id, o_entry_d);
         printStream.printf("  %-11s%-11s%-8s%-14s%s\n", "Supply-W","Item-Id","Qty","Amount","Delivery-Date");
-//        for (OutputRepeatingGroup output:outputRepeatingGroups) {
-//            printStream.printf("  %-11s%-11s%-8s%-14s%s\n", output.ol_supply_w_id, output.ol_i_id, output.ol_quantity, output.ol_amount, output.ol_delivery_d);
-//        }
+        for (OutputRepeatingGroup output:outputRepeatingGroups) {
+            printStream.printf("  %-11s%-11s%-8s%-14s%s\n", output.ol_supply_w_id, output.ol_i_id, output.ol_quantity, output.ol_amount, output.ol_delivery_d);
+        }
         printStream.println();
     }
 }

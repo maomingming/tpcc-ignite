@@ -239,9 +239,9 @@ public class Worker {
         orderStatusTxn.o_carrier_id = order.o_carrier_id;
 
         orderStatusTxn.outputRepeatingGroups = new OrderStatusTxn.OutputRepeatingGroup[order.o_ol_cnt];
-        for (int i = 1; i <= order.o_ol_cnt; i++) {
-            OrderLine orderLine = (OrderLine) driver.find("ORDER_LINE",
-                    new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", orderStatusTxn.d_id, "ol_o_id", orderStatusTxn.o_id, "ol_number", i)),
+        for (int i = 0; i < order.o_ol_cnt; i++) {
+            OrderLine orderLine = (OrderLine) driver.findOne("ORDER_LINE",
+                    new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", orderStatusTxn.d_id, "ol_o_id", orderStatusTxn.o_id, "ol_number", i+1)),
                     new Projection("OrderLine", Arrays.asList("ol_i_id", "ol_supply_w_id", "ol_quantity", "ol_amount", "ol_delivery_d")));
             orderStatusTxn.outputRepeatingGroups[i] = new OrderStatusTxn.OutputRepeatingGroup(
                     orderLine.ol_i_id, orderLine.ol_supply_w_id, orderLine.ol_quantity, orderLine.ol_amount, orderLine.ol_delivery_d

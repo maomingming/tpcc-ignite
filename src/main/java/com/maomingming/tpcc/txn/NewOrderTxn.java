@@ -69,7 +69,7 @@ public class NewOrderTxn implements Txn {
     public boolean isRollback=false;
 
     public void printResult(PrintStream printStream) {
-        printStream.println("NEW ORDER");
+        printStream.println("New-Order");
         if (isRollback) {
             printStream.printf("Warehouse: %d\tDistrict: %d\n", w_id, d_id);
             printStream.printf("Customer: %d\tName: %s\tCredit: %s\n", c_id, c_last, c_credit);

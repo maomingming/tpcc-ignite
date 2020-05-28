@@ -22,7 +22,7 @@ public class Counter extends Thread {
     static AtomicInteger[] orderStatusTime = new AtomicInteger[MAX_RT * I_NUM_PER_SEC];
     static AtomicInteger[] deliveryTime = new AtomicInteger[MAX_RT * I_NUM_PER_SEC];
     static AtomicInteger[] stockLevelTime = new AtomicInteger[MAX_RT * I_NUM_PER_SEC];
-
+    static PrintStream printStream;
     static {
         for (int i = 0; i < MAX_RT * I_NUM_PER_SEC; i++) {
             newOrderTime[i] = new AtomicInteger(0);
@@ -31,15 +31,20 @@ public class Counter extends Thread {
             deliveryTime[i] = new AtomicInteger(0);
             stockLevelTime[i] = new AtomicInteger(0);
         }
-    }
-    public void run() {
-        PrintStream printStream;
         try {
             printStream = new PrintStream("result/stat.log");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+    public void run() {
+        try {
+            sleep(120000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long begin = System.currentTimeMillis();
         while (true) {
             long lastMill = System.currentTimeMillis();
             int last_cnt = newOrderCnt.get();
@@ -51,18 +56,33 @@ public class Counter extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            printStream.printf("tpmC: %d, ", (int)((newOrderCnt.get()-last_cnt)/((float)(System.currentTimeMillis()-lastMill)/60000)));
-            printStream.printf("90th Percentile Response Time: %.1fs, %.1fs, %.1fs, %.1fs, %.1fs. ",
-                    getPercentile(newOrderTime,0.9f), getPercentile(paymentTime,0.9f),
-                    getPercentile(orderStatusTime,0.9f), getPercentile(deliveryTime,0.9f),getPercentile(stockLevelTime,0.9f));
-            printStream.printf("Retry times: %d, %d, %d\n", newOrderRetryCnt.get()-lastNewOrderRetry,
-                    paymentRetryCnt.get()-lastPaymentRetry, deliveryRetryCnt.get()-lastDeliveryRetry);
+            printStream.printf("tpmC: %d\n", (int)(newOrderCnt.get()/((float)(System.currentTimeMillis()-begin)/60000)));
+            int newOrderNow = newOrderCnt.get();
+            int paymentNow = paymentCnt.get();
+            int orderStatusNow = orderStatusCnt.get();
+            int deliveryNow = deliveryCnt.get();
+            int stockLevelNow = stockLevelCnt.get();
+            int total = newOrderNow + paymentNow + orderStatusNow + deliveryNow + stockLevelNow;
+            printTxnInfo("NEW-ORDER", newOrderNow, total, newOrderTime, newOrderRetryCnt.get());
+            printTxnInfo("PAYMENT", paymentNow, total, paymentTime, paymentRetryCnt.get());
+            printTxnInfo("ORDER-STATUS", orderStatusNow, total, orderStatusTime, 0);
+            printTxnInfo("DELIVERY", deliveryNow, total, deliveryTime, deliveryRetryCnt.get());
+            printTxnInfo("STOCK-LEVEL", stockLevelNow, total, stockLevelTime, 0);
+            printStream.println();
         }
+    }
+
+    public static void printTxnInfo(String name, int cnt, int cntAll, AtomicInteger[] timeCnt, int retry) {
+        printStream.println(name+" Transactions:");
+        printStream.printf("total: %d, mix: %.2f%%\n", cnt, (float)cnt/cntAll);
+        printStream.printf("retry times: %d, retry percentage: %.2f%%\n", retry, (float)retry/cnt);
+        printStream.printf("Response Time (50th, 75th, 90th, 99th): %.1fs, %.1fs, %.1fs, %.1fs\n",
+                getPercentile(timeCnt, 0.5f), getPercentile(timeCnt, 0.75f), getPercentile(timeCnt, 0.9f), getPercentile(timeCnt, 0.99f));
     }
 
     public static void addResponseTime(long responseTime, String txnType) {
         int intervalNum = (int)(responseTime * I_NUM_PER_SEC / 1000);
-        if (intervalNum > MAX_RT * I_NUM_PER_SEC)
+        if (intervalNum >= MAX_RT * I_NUM_PER_SEC)
             intervalNum = MAX_RT * I_NUM_PER_SEC - 1;
         switch (txnType) {
             case "NEW_ORDER":
