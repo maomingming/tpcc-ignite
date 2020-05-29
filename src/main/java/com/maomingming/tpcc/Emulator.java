@@ -19,7 +19,7 @@ public class Emulator extends Thread {
     ExecutorService executorService;
 
     public void run() {
-        key(RandomGenerator.makeNumber(1,100000));
+        key(RandomGenerator.makeNumber(1, 100000));
         for (int i = 0; i < 1000000; i++) {
             int r = RandomGenerator.makeNumber(1, 23);
             if (r <= 10) {
@@ -27,53 +27,53 @@ public class Emulator extends Thread {
                 key(18000);
                 long begin = System.currentTimeMillis();
                 int ret = doNext("NEW_ORDER", newOrderTxn, 0);
-                if (ret>=0) {
+                if (ret >= 0) {
                     Counter.addResponseTime(System.currentTimeMillis() - begin, "NEW_ORDER");
                     Counter.newOrderCnt.incrementAndGet();
                     Counter.newOrderRetryCnt.addAndGet(ret);
-                }
+                } else Counter.newOrderPassCnt.incrementAndGet();
                 think(12000);
             } else if (r <= 20) {
                 PaymentTxn paymentTxn = new PaymentTxn(w_id, w_cnt);
                 key(3000);
                 long begin = System.currentTimeMillis();
                 int ret = doNext("PAYMENT", paymentTxn, 0);
-                if (ret>=0) {
+                if (ret >= 0) {
                     Counter.addResponseTime(System.currentTimeMillis() - begin, "PAYMENT");
                     Counter.paymentCnt.incrementAndGet();
                     Counter.paymentRetryCnt.addAndGet(ret);
-                }
+                } else Counter.paymentPassCnt.incrementAndGet();
                 think(12000);
             } else if (r == 21) {
                 OrderStatusTxn orderStatusTxn = new OrderStatusTxn(w_id);
                 key(2000);
                 long begin = System.currentTimeMillis();
                 int ret = doNext("ORDER_STATUS", orderStatusTxn, 0);
-                if (ret>=0) {
+                if (ret >= 0) {
                     Counter.addResponseTime(System.currentTimeMillis() - begin, "ORDER_STATUS");
                     Counter.orderStatusCnt.incrementAndGet();
-                }
+                } else Counter.orderStatusPassCnt.incrementAndGet();
                 think(10000);
             } else if (r == 22) {
                 DeliveryTxn deliveryTxn = new DeliveryTxn(w_id);
                 key(2000);
                 long begin = System.currentTimeMillis();
                 int ret = doNext("DELIVERY", deliveryTxn, 0);
-                if (ret>=0) {
+                if (ret >= 0) {
                     Counter.addResponseTime(System.currentTimeMillis() - begin, "DELIVERY");
                     Counter.deliveryCnt.incrementAndGet();
                     Counter.deliveryRetryCnt.addAndGet(ret);
-                }
+                } else Counter.deliveryPassCnt.incrementAndGet();
                 think(5000);
             } else {
                 StockLevelTxn stockLevelTxn = new StockLevelTxn(w_id, t_id);
                 key(2000);
                 long begin = System.currentTimeMillis();
                 int ret = doNext("STOCK_LEVEL", stockLevelTxn, 0);
-                if (ret>=0) {
+                if (ret >= 0) {
                     Counter.addResponseTime(System.currentTimeMillis() - begin, "STOCK_LEVEL");
                     Counter.stockLevelCnt.incrementAndGet();
-                }
+                } else Counter.stockLevelPassCnt.incrementAndGet();
                 think(5000);
             }
         }
@@ -82,8 +82,8 @@ public class Emulator extends Thread {
 
     void think(int mean_time) {
         int time = (int) (-Math.log(RandomGenerator.makeDecimal(1, 99, 2).doubleValue()) * mean_time);
-        if (time > mean_time *10)
-            time = mean_time*10;
+        if (time > mean_time * 10)
+            time = mean_time * 10;
 //        System.out.printf("w_id: %d, t_id: %d, time: %d\n",w_id, t_id,time);
         key(time);
     }
@@ -128,15 +128,19 @@ public class Emulator extends Thread {
         });
         executorService.execute(futureTask);
         try {
-            Integer ret = futureTask.get(50000, TimeUnit.MILLISECONDS);
-            if (ret==0) txn.printResult(printStream);
+            long timeout=50000;
+            if (type.equals("DELIVERY")) timeout=800000;
+            if (type.equals("STOCK_LEVEL")) timeout = 500000;
+            Integer ret = futureTask.get(timeout, TimeUnit.MILLISECONDS);
+            if (ret == 0) txn.printResult(printStream);
             return times;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
             futureTask.cancel(true);
             worker.rollback();
-            if (times<MAX_RETRY_TIMES)
-                return doNext(type, txn, times+1);
+//            if (type.equals("DELIVERY")) System.out.println(((DeliveryTxn)txn).start_d);
+            if (times < MAX_RETRY_TIMES)
+                return doNext(type, txn, times + 1);
         }
         return -1;
     }

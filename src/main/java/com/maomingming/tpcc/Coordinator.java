@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 public class Coordinator {
 
-    static int w_cnt = 15;
+    static int w_cnt = 45;
     static String driverType = "SQL_DRIVER";
 
     public static void main(String[] args) throws Exception {

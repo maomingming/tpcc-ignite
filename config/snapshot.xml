@@ -33,40 +33,59 @@
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="CUSTOMER"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="DISTRICT"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="HISTORY"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ITEM"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="NEW_ORDER"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ORDER_LINE"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="ORDER"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="STOCK"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="WAREHOUSE"/>
                     <property name="atomicityMode" value="TRANSACTIONAL_SNAPSHOT"/>
+                    <property name="dataRegionName" value="Default_Region"/>
                 </bean>
             </list>
+        </property>
+        <property name="DataStorageConfiguration">
+            <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                <property name="defaultDataRegionConfiguration">
+                    <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                        <property name="name" value="Default_Region"/>
+                        <property name="maxSize" value="#{32L * 1024 * 1024 * 1024}"/>
+                    </bean>
+                </property>
+            </bean>
         </property>
     </bean>
 </beans>

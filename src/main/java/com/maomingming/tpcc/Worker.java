@@ -264,14 +264,19 @@ public class Worker {
 
             Query orderQuery = new Query(ImmutableMap.of("o_w_id", w_id, "o_d_id", d_id, "o_id", o_id));
             Order order = (Order) driver.findOne("ORDER", orderQuery,
-                    new Projection("Order", Collections.singletonList("o_c_id")));
+                    new Projection("Order", Arrays.asList("o_c_id", "o_ol_cnt")));
             driver.update("ORDER", orderQuery, new Update(null, null, ImmutableMap.of("o_carrier_id", deliveryTxn.o_carrier_id)));
             int c_id = order.o_c_id;
 
-            Query orderLineQuery = new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", d_id, "ol_o_id", o_id));
-            BigDecimal amount = (BigDecimal) driver.aggregation("ORDER_LINE", orderLineQuery, new Aggregation("SUM", "ol_amount", "DECIMAL"));
-            driver.update("ORDER_LINE", orderLineQuery,
-                    new Update(null, null, ImmutableMap.of("ol_delivery_d", new Date())));
+            BigDecimal amount = BigDecimal.valueOf(0);
+            for (int i=0;i<order.o_ol_cnt;i++) {
+                Query orderLineQuery = new Query(ImmutableMap.of("ol_w_id", w_id, "ol_d_id", d_id, "ol_o_id", o_id, "ol_number", i+1));
+                OrderLine orderLine = (OrderLine) driver.findOne("ORDER_LINE", orderLineQuery,
+                        new Projection("OrderLine", Collections.singletonList("ol_amount")));
+                amount = amount.add(orderLine.ol_amount);
+                driver.update("ORDER_LINE", orderLineQuery,
+                        new Update(null, null, ImmutableMap.of("ol_delivery_d", new Date())));
+            }
 
             driver.update("CUSTOMER",
                     new Query(ImmutableMap.of("c_w_id", w_id, "c_d_id", d_id, "c_id", c_id)),
